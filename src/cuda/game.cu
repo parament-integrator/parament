@@ -58,7 +58,7 @@ int main(int argc, const char* argv[]) {
     
     } 
 
-    if argv > 2 {}
+    // if (argv > 2) {}
 
     // Generate H0 & H1 matrices and c array
     cuComplex* hostH0 = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
