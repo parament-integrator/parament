@@ -125,4 +125,4 @@ dmypy.json
 cython_debug/
 
 # Export files 
-.exp
+*.exp
