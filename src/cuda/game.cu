@@ -13,9 +13,9 @@ using namespace std;
 
 
 #include "deviceInfo.cu"
-#include "printFuncs.cu"
-#include "mathhelper.cu"
-#include "errorchecker.cu"
+#include "printFuncs.c"
+#include "mathhelper.c"
+#include "errorchecker.c"
 
 // https://devblogs.nvidia.com/cuda-pro-tip-write-flexible-kernels-grid-stride-loops/
 __global__
