@@ -1,4 +1,4 @@
-#include <cuda_runtime_api.h>
+#include <cublas_v2.h>
 
 #define NO_CUDA_STUBS
 
@@ -16,7 +16,7 @@ __global__ void saxpy(cuComplex a, cuComplex *y, int s, int n)
       }
 }
 
-void diagonal_add(cuComplex num, cuComplex *C_GPU, int batch_size)
+void diagonal_add(cuComplex num, cuComplex *C_GPU, int batch_size, unsigned int numSMs, unsigned int dim)
 {
     saxpy<<<32*numSMs, 256>>>(num, C_GPU, dim, batch_size);
 }

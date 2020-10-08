@@ -123,7 +123,7 @@ Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex 
  * 
  * :param handle: Handle to the Parament context.
  */
-Parament_ErrorCode Parament_getLastError(struct Parament_Context *handle);
+Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
 
 /**
  * Get human readable message from error code.

@@ -13,6 +13,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <cuda_runtime_api.h>
+#include <stdio.h>
 
 // Displays the available GPUs in stdout
 __declspec(dllexport) void device_info() {
@@ -21,7 +22,7 @@ __declspec(dllexport) void device_info() {
     printf("Total number of CUDA devices: %d\n", nDevices);
     printf("-----------------------------------\n");
     for (int i = 0; i < nDevices; i++) {
-        cudaDeviceProp prop;
+        struct cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, i);
         printf("Device Number: %d\n", i);
         printf("  Device name: %s\n", prop.name);

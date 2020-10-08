@@ -13,8 +13,7 @@ limitations under the License.
 ==============================================================================*/
 
 
-#include <cuda_runtime.h>
-
+#include <cublas_v2.h>
 
 // Returns the kth power of the imaginary unit in the cuComplex type
 cuComplex imag_power(int k);

@@ -1,0 +1,1 @@
+nvcc -lcublas -o test.exe deviceInfo.c diagonal_add.cu main.cpp mathhelper.c parament.c printFuncs.c

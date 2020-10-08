@@ -2,7 +2,8 @@
 #define PARAMENT_CONTEXT_H_
 
 #include <cublas_v2.h>
-#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
+#include <stdbool.h>
 
 #define NO_CUDA_STUBS
 #include "parament.h"
@@ -15,9 +16,9 @@ struct Parament_Context {
     cublasHandle_t cublasHandle;
 
     // GPU Arrays and constants
-    cuComplex* H0;
-    cuComplex* H1;
-    cuComplex* one_GPU;
+    cuComplex *H0;
+    cuComplex *H1;
+    cuComplex *one_GPU;
     cuComplex *one_GPU_diag;
 
     // Dimension of the Hilbert space
@@ -27,17 +28,17 @@ struct Parament_Context {
     unsigned int curr_max_pts;
 
     // Point arrays
-    cuComplex* c0;
-    cuComplex* c1;
-    cuComplex* X;
-    cuComplex* D0;
-    cuComplex* D1;
+    cuComplex *c0;
+    cuComplex *c1;
+    cuComplex *X;
+    cuComplex *D0;
+    cuComplex *D1;
 
     // check vars
-    bool hamiltonian_is_set = false;
+    bool hamiltonian_is_set;
 
     // BESSEL COEFFICIENTS
-    cuComplex* J;
+    cuComplex *J;
     unsigned int MMAX;
     float alpha;
     float beta;
@@ -46,5 +47,13 @@ struct Parament_Context {
     int numSMs;
 
     enum Parament_ErrorCode lastError;
+
+    // Commonly used constants
+    // (can't be actually const, because we compute the value by calling make_complex())
+    cuComplex zero;
+    cuComplex one;
+    cuComplex two;
+    cuComplex mone;
+    cuComplex mtwo;
 };
 #endif  // PARAMENT_CONTEXT_H_

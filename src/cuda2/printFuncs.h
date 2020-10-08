@@ -13,7 +13,6 @@ limitations under the License.
 ==============================================================================*/
 
 
-#include <cuda_runtime.h>
-
+#include <cublas_v2.h>
 
 void printcomplex(cuComplex* data, int len);
