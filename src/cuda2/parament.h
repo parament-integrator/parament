@@ -5,6 +5,14 @@
 extern "C" {
 #endif
 
+#ifdef PARAMENT_BUILD_DLL
+#define LIBSPEC __declspec(dllexport)
+#elif defined(PARAMENT_LINK)
+#define LIBSPEC 
+#else
+#define LIBSPEC __declspec(dllimport)
+#endif
+
 #ifndef NO_CUDA_STUBS
 typedef struct cuComplex cuComplex;
 #endif  // NO_CUDA_STUBS
@@ -72,7 +80,7 @@ typedef enum Parament_ErrorCode {
  *   - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when the underlying call to :c:func:`malloc()` failed.
  * 
  */
-Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
+LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
 
 /**
  * Initialize the Parament context.
@@ -88,7 +96,7 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
   
  */
-Parament_ErrorCode Parament_init(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_init(struct Parament_Context *handle);
 
 /**
  * Destroy the context previously created with :c:func:`Parament_create`.
@@ -99,7 +107,7 @@ Parament_ErrorCode Parament_init(struct Parament_Context *handle);
  * 
  * Using a context after it has been destroyed results in undefined behaviour.
  */
-Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
 
 /**
  * Load a Hamiltonian.
@@ -109,7 +117,7 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
  * :param H1: Interaction Hamiltonian. Must be `dim` x `dim` array.
  * :param dim: Dimension of the Hamiltonians.
  */
-Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuComplex *H0, cuComplex *H1, unsigned int dim);
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuComplex *H0, cuComplex *H1, unsigned int dim);
 
 /**
  * Compute the propagator from the Hamiltionian.
@@ -120,21 +128,21 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
  * :param pts: Number of entries in `carr`.
  * :param out: The returned propagator.
  */
-Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out);
+LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out);
 
 /**
  * Query the last error code.
  * 
  * :param handle: Handle to the Parament context.
  */
-Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
 
 /**
  * Get human readable message from error code.
  * 
  * :param errorCode: Error code for which to retrieve a message.
  */
-const char *Parament_errorMessage(Parament_ErrorCode errorCode);
+LIBSPEC const char *Parament_errorMessage(Parament_ErrorCode errorCode);
 
 #ifdef __cplusplus
 }
