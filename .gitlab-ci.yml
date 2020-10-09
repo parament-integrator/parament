@@ -1,0 +1,8 @@
+stages:
+  - build
+  - test
+
+buildCudaWin:
+  stage: build
+  script: 
+    - "&tools\\build.bat"

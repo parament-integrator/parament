@@ -1,0 +1,3 @@
+spinx
+sphinx-rtd-theme
+sphinx-c-autodoc
