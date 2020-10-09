@@ -30,7 +30,7 @@ __declspec(dllexport) void device_info(void) {
         struct cudaDeviceProp prop;
         error = cudaGetDeviceProperties(&prop, i);
             if(cudaSuccess != error) {
-            printf("Failed to query device properties", error);
+            printf("Failed to query device properties. Error code: %d", error);
             return;
         }
         printf("Device Number: %d\n", i);

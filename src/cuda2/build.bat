@@ -1,1 +1,2 @@
 nvcc -lcublas -o test.exe deviceinfo.c diagonal_add.cu main.cpp mathhelper.c parament.c printFuncs.c
+nvcc -lcublas -o hello.dll -lcublas --shared deviceinfo.c diagonal_add.cu main.cpp mathhelper.c parament.c printFuncs.c
