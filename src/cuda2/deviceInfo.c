@@ -16,14 +16,23 @@ limitations under the License.
 #include <stdio.h>
 
 // Displays the available GPUs in stdout
-__declspec(dllexport) void device_info() {
+__declspec(dllexport) void device_info(void) {
     int nDevices;
-    cudaGetDeviceCount(&nDevices);
+    cudaError_t error;
+    error = cudaGetDeviceCount(&nDevices);
+    if(cudaSuccess != error) {
+        printf("Failed to query the number of CUDA devices. Error code: %d\n", error);
+        return;
+    }
     printf("Total number of CUDA devices: %d\n", nDevices);
     printf("-----------------------------------\n");
     for (int i = 0; i < nDevices; i++) {
         struct cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, i);
+        error = cudaGetDeviceProperties(&prop, i);
+            if(cudaSuccess != error) {
+            printf("Failed to query device properties", error);
+            return;
+        }
         printf("Device Number: %d\n", i);
         printf("  Device name: %s\n", prop.name);
         printf("  Memory Clock Rate (KHz): %d\n",

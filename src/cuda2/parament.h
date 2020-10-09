@@ -1,6 +1,10 @@
 #ifndef PARAMENT_H_
 #define PARAMENT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef NO_CUDA_STUBS
 typedef struct cuComplex cuComplex;
 #endif  // NO_CUDA_STUBS
@@ -131,5 +135,9 @@ Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
  * :param errorCode: Error code for which to retrieve a message.
  */
 const char *Parament_errorMessage(Parament_ErrorCode errorCode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // PARAMENT_H_

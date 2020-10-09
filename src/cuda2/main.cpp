@@ -1,4 +1,5 @@
 #include <iostream>
+#include <assert.h>
 #include "deviceinfo.h"
 #include <cublas_v2.h>
 #define NO_CUDA_STUBS
@@ -41,9 +42,9 @@ int main(int argc, const char* argv[]) {
     }
 
     Parament_Context* parament;
-    Parament_create(&parament);
-    Parament_init(parament);
-    Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM);
+    assert(PARAMENT_STATUS_SUCCESS == Parament_create(&parament));
+    assert(PARAMENT_STATUS_SUCCESS == Parament_init(parament));
+    assert(PARAMENT_STATUS_SUCCESS == Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM));
     
     cuComplex* outputmat = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
     
