@@ -33,39 +33,39 @@ typedef enum Parament_ErrorCode {
      * 
      * The machine is likely running out of memory. Deallocate memory that is no longer needed.
      */
-    PARAMENT_STATUS_HOST_ALLOC_FAILED,
+    PARAMENT_STATUS_HOST_ALLOC_FAILED = 10,
 
     /**
      * Memory allocation on the device failed. This error usually arises from a failure of ``cudaMalloc()``.
      * 
      * Deallocate memory that is no longer needed.
      */
-    PARAMENT_STATUS_DEVICE_ALLOC_FAILED,
+    PARAMENT_STATUS_DEVICE_ALLOC_FAILED = 20,
 
     /**
      * Failed to initialize the cuBLAS library.
      */
-    PARAMENT_STATUS_CUBLAS_INIT_FAILED,
+    PARAMENT_STATUS_CUBLAS_INIT_FAILED = 30,
 
     /**
-     * Trying to call :c:func:`Parament_init` with a context that is initialized already.
+     * Trying to call :c:func:`Parament_init` with a context that is already initialized.
      */
-    PARAMENT_STATUS_ALREADY_INITIALIZED,
+    PARAMENT_STATUS_ALREADY_INITIALIZED = 40,
 
     /**
      * Trying to call a Parament function with an illegal value.
      */
-    PARAMENT_STATUS_INVALID_VALUE,
+    PARAMENT_STATUS_INVALID_VALUE = 50,
 
     /**
      * Failed to execute cuBLAS function.
      */
-    PARAMENT_STATUS_CUBLAS_FAILED,
+    PARAMENT_STATUS_CUBLAS_FAILED = 60,
 
     /**
      * Place holder for more error codes...
      */
-    PARAMENT_FAIL = 100
+    PARAMENT_FAIL = 1000
     // ...
 } Parament_ErrorCode;
 

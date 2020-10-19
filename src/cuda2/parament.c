@@ -426,10 +426,21 @@ Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle) {
 
 const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
     switch (errorCode) {
-        case PARAMENT_STATUS_SUCCESS:
-            return "Success";
-        default:
-            return "Error";
-        // TODO: complete
+    PARAMENT_STATUS_SUCCESS:
+        return "Success";
+    PARAMENT_STATUS_HOST_ALLOC_FAILED:
+        return "Memory allocation on the host failed.";
+    PARAMENT_STATUS_DEVICE_ALLOC_FAILED:
+        return "Memory allocation on the device failed.";
+    PARAMENT_STATUS_CUBLAS_INIT_FAILED:
+        return "Failed to initialize the cuBLAS library.";
+    PARAMENT_STATUS_ALREADY_INITIALIZED:
+        return "Trying to call `Parament_init` with a context that is already initialized.";
+    PARAMENT_STATUS_INVALID_VALUE:
+        return "Invalid value.";
+    PARAMENT_STATUS_CUBLAS_FAILED:
+        return "Failed to execute cuBLAS function.";
+    default:
+        return "Unknown error code";
     }
 }
