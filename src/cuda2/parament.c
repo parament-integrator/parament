@@ -42,6 +42,7 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
 
     // initialize options
     paramentHandle->MMAX = 11;
+    paramentHandle->MMAX_manual = false;
 
     // BESSEL COEFFICIENTS
     paramentHandle->alpha = -2.0;
@@ -182,6 +183,10 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
         goto error_cleanup;
     }
+
+    // Determine norm. We use the 1-norm as an upper limit
+    handle->Hnorm = OneNorm(H0,dim);
+    
 
     // nvtxMarkA("Set Hamiltonian routine completed");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
@@ -401,9 +406,31 @@ int Select_Iteration_cycles_fp32(float H_norm, float dt) {
     
 }
 
+Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *handle, unsigned int cycles) {
+    handle->MMAX = cycles;
+    handle->MMAX_manual = true;
+    return PARAMENT_STATUS_SUCCESS;
+}
+
+Parament_ErrorCode Parament_unsetIterationCycles(struct Parament_Context *handle) {
+    handle->MMAX = 11;
+    handle->MMAX_manual = false;
+    return PARAMENT_STATUS_SUCCESS;
+}
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
     Parament_ErrorCode error;
+
+    if (handle->MMAX_manual != true){
+        int MMAX_selected;
+        MMAX_selected = Select_Iteration_cycles_fp32(handle->Hnorm, dt);
+        if (MMAX_selected == -1){
+            handle->lastError = PARAMENT_STATUS_SELECT_SMALLER_DT;
+            return handle->lastError;
+        }
+        
+        handle->MMAX = MMAX_selected;
+    }
 
     error = equipropTransfer(handle, carr, pts);
     if (PARAMENT_STATUS_SUCCESS != error) {

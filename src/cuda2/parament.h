@@ -63,6 +63,11 @@ typedef enum Parament_ErrorCode {
     PARAMENT_STATUS_CUBLAS_FAILED,
 
     /**
+     * Failed to beform automatic iteration cycles determination.
+     */
+    PARAMENT_STATUS_SELECT_SMALLER_DT,
+
+    /**
      * Place holder for more error codes...
      */
     PARAMENT_FAIL = 100
@@ -140,6 +145,22 @@ LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cu
  * :param out: Number of iteration cycles.
  */
 LIBSPEC int Select_Iteration_cycles_fp32(float H_norm, float dt);
+
+/**
+ * Manually enforce the number of iteration cycles used for the Chebychev approximation
+ *  
+ * :param handle: Handle to the Parament context.
+ * :param cycles: Number of iteration cycles.
+ */
+LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *handle, unsigned int cycles);
+
+/**
+ * Reenable the automatic choice for the number of iteration cycles used for the Chebychev approximation
+ *  
+ * :param handle: Handle to the Parament context.
+ */
+LIBSPEC Parament_ErrorCode Parament_unsetIterationCycles(struct Parament_Context *handle);
+
 
 
 /**
