@@ -1,1 +1,1 @@
-from .parament import parament
+from .parament import Parament

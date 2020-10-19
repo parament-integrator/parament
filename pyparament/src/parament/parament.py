@@ -3,7 +3,7 @@ from .errorcodes import *
 import numpy as np
 
 # Todo: switch Win vs Linux
-lib = ctypes.LoadLibrary('parament.dll')
+lib = ctypes.cdll.LoadLibrary('parament.dll')
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = ctypes.c_void_p
@@ -14,20 +14,20 @@ lib.Parament_init.argtypes = [c_ParamentContext_p]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
 lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint]
 lib.Parament_equiprop.argtypes = [c_ParamentContext_p, ctypes.c_void_p, ctypes.c_float, ctypes.c_uint, c_cuComplex_p]
-lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
+#lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
-lib.Parament_errorMessage.restype = c_char_p
+lib.Parament_errorMessage.restype = ctypes.c_char_p
 
 class Parament:
     def __init__(self):
         self._handle = ctypes.c_void_p()
-        self._checkError(self.lib.Parament_create(ctypes.byref(self._handle)))
+        self._checkError(lib.Parament_create(ctypes.byref(self._handle)))
 
     def initialize(self):
-        self._checkError(self.lib.Parament_init(self._handle))
+        self._checkError(lib.Parament_init(self._handle))
 
     def destroy(self):
-        self._checkError(self.lib.Parament_destroy(self._handle))
+        self._checkError(lib.Parament_destroy(self._handle))
         self._handle = None
     
     def __del__(self):
@@ -39,10 +39,10 @@ class Parament:
         dim = np.shape(H0)
         dim = dim[0]
         self.dim = dim
-        self._checkError(self.lib.Parament_setHamiltonian(self._handle, np.asfortranarray(H0),np.asfortranarray(H1),dim)))
+        self._checkError(self.lib.Parament_setHamiltonian(self._handle, np.asfortranarray(H0),np.asfortranarray(H1),dim))
 
-    def equiprop(self, c: np.ndarray, dt: float):
-        if not c.dtype == np.
+    #def equiprop(self, c: np.ndarray, dt: float):
+    #    if not c.dtype == np.
 
     def _getErrorMessage(self, code=None):
         if code is None:
@@ -50,7 +50,7 @@ class Parament:
         return self.lib.Parament_errorMessage(code).decode()
 
     def _checkError(self, errorCode):
-        if errorCode == PARAMENT_SUCCESS:
+        if errorCode == PARAMENT_STATUS_SUCCESS:
             return
         try:
             exceptionClass = {
