@@ -383,6 +383,24 @@ static Parament_ErrorCode equipropReduce(struct Parament_Context *handle, unsign
     return PARAMENT_STATUS_SUCCESS;
 }
 
+int Select_Iteration_cycles_fp32(float H_norm, float dt) {
+    if (H_norm*dt <= 0.032516793) { return 3; };
+    if (H_norm*dt <= 0.219062571) { return 5; };
+    if (H_norm*dt <= 0.619625593) { return 7; };
+    if (H_norm*dt <= 1.218059203) { return 9; };
+    if (H_norm*dt <= 1.979888284) { return 11; };
+    if (H_norm*dt <= 2.873301187) { return 13; };
+    if (H_norm*dt <= 3.872963682) { return 15; };
+    if (H_norm*dt <= 4.959398466) { return 17; };
+    if (H_norm*dt <= 6.117657121) { return 19; };
+    if (H_norm*dt <= 7.336154907) { return 21; };
+    if (H_norm*dt <= 8.605792444) { return 23; };
+    if (H_norm*dt <= 9.919320831) { return 25; };
+    if (H_norm*dt <= 11.27088616) { return 27; };
+    if (H_norm*dt <= 12.65570085) { return 29; } else {return -1;};
+    
+}
+
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
     Parament_ErrorCode error;
