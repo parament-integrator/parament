@@ -6,7 +6,7 @@ import numpy as np
 lib = ctypes.cdll.LoadLibrary('parament.dll')
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
-c_cuComplex_p = ctypes.c_void_p
+c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
 
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
@@ -39,15 +39,15 @@ class Parament:
         dim = np.shape(H0)
         dim = dim[0]
         self.dim = dim
-        self._checkError(self.lib.Parament_setHamiltonian(self._handle, np.asfortranarray(H0),np.asfortranarray(H1),dim))
+        self._checkError(lib.Parament_setHamiltonian(self._handle, np.complex64(np.asfortranarray(H0)),np.complex64(np.asfortranarray(H1)),dim))
 
     #def equiprop(self, c: np.ndarray, dt: float):
     #    if not c.dtype == np.
 
     def _getErrorMessage(self, code=None):
         if code is None:
-            code = self.lib.Parament_getLastError(self._handle)
-        return self.lib.Parament_errorMessage(code).decode()
+            code = lib.Parament_getLastError(self._handle)
+        return lib.Parament_errorMessage(code).decode()
 
     def _checkError(self, errorCode):
         if errorCode == PARAMENT_STATUS_SUCCESS:
@@ -63,7 +63,7 @@ class Parament:
                 PARAMENT_FAIL: RuntimeError,
             }[errorCode]
         except KeyError as e:
-            raise AssertionError('Unknown error code') from e
+            raise AssertionError('Unknown error code ') from e
 
         message = self._getErrorMessage(errorCode)
         raise exceptionClass(errorCode)
