@@ -15,8 +15,27 @@ limitations under the License.
 
 #include <cublas_v2.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef PARAMENT_BUILD_DLL
+#define LIBSPEC __declspec(dllexport)
+#elif defined(PARAMENT_LINK)
+#define LIBSPEC 
+#else
+#define LIBSPEC __declspec(dllimport)
+#endif
+
 // Returns the kth power of the imaginary unit in the cuComplex type
 cuComplex imag_power(int k);
 
 // Returns the Bessel function array as cuComplex type
 void J_arr(cuComplex* arr, int mmax, double c);
+
+LIBSPEC float OneNorm(cuComplex* arr, unsigned int dim);
+
+
+#ifdef __cplusplus
+}
+#endif

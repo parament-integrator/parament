@@ -35,3 +35,23 @@ void J_arr(cuComplex* arr, int mmax, double c) {
         arr[i] = cuCmulf(imag_power(i), make_cuComplex(_jn(i,c), 0));
     }
 }
+
+
+float OneNorm(cuComplex* mat, unsigned int dim) { 
+    float sum = 0; 
+    float result = 0;
+    for (int i = 0; i < dim; i++) { 
+        sum = 0;
+        
+        for(int j = 0; j < dim; j++) {
+            sum += cuCabsf(mat[dim*i+j]);
+        }
+        
+        if (sum > result) {
+            result = sum;
+        }
+        
+    } 
+    
+    return result;
+} 

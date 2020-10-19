@@ -63,6 +63,11 @@ typedef enum Parament_ErrorCode {
     PARAMENT_STATUS_CUBLAS_FAILED = 60,
 
     /**
+     * Failed to beform automatic iteration cycles determination.
+     */
+    PARAMENT_STATUS_SELECT_SMALLER_DT,
+
+    /**
      * Place holder for more error codes...
      */
     PARAMENT_FAIL = 1000
@@ -129,6 +134,34 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *hand
  * :param out: The returned propagator.
  */
 LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out);
+
+
+/**
+ * Get the number of Chebychev cycles for the given Hamiltonian and the given evolution time that are necessary to reach machine precision.
+ * Returns -1 if the product of norm and dt is too large to be handled.
+ *  
+ * :param H_norm: Operator norm.
+ * :param dt: Time step.
+ * :param out: Number of iteration cycles.
+ */
+LIBSPEC int Select_Iteration_cycles_fp32(float H_norm, float dt);
+
+/**
+ * Manually enforce the number of iteration cycles used for the Chebychev approximation
+ *  
+ * :param handle: Handle to the Parament context.
+ * :param cycles: Number of iteration cycles.
+ */
+LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *handle, unsigned int cycles);
+
+/**
+ * Reenable the automatic choice for the number of iteration cycles used for the Chebychev approximation
+ *  
+ * :param handle: Handle to the Parament context.
+ */
+LIBSPEC Parament_ErrorCode Parament_unsetIterationCycles(struct Parament_Context *handle);
+
+
 
 /**
  * Query the last error code.

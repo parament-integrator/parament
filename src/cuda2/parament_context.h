@@ -23,6 +23,9 @@ struct Parament_Context {
 
     // Dimension of the Hilbert space
     unsigned int dim;
+    
+    // Hnorm used for automatically setting the # of iteration cycles
+    float Hnorm;
 
     // Currently initialized time steps
     unsigned int curr_max_pts;
@@ -39,7 +42,6 @@ struct Parament_Context {
 
     // BESSEL COEFFICIENTS
     cuComplex *J;
-    unsigned int MMAX;
     float alpha;
     float beta;
 
@@ -55,5 +57,10 @@ struct Parament_Context {
     cuComplex two;
     cuComplex mone;
     cuComplex mtwo;
+
+    // Iteration cycle number
+    unsigned int MMAX;
+    bool MMAX_manual;
+
 };
 #endif  // PARAMENT_CONTEXT_H_
