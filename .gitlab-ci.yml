@@ -2,7 +2,27 @@ stages:
   - build
   - test
 
-buildCudaWin:
+buildCuda:win:
   stage: build
   script: 
     - "&tools\\build.bat"
+  artifacts:
+    paths:
+      - build/parament.exe
+      - build/parament.dll
+
+buildDocs:
+  stage: build
+  script:
+    - "&tools\\buildDocs.bat"
+  artifacts:
+    paths:
+      - docs/_build/
+
+runTest:win:
+  stage: test
+  script:
+    - ".\\build\\parament.exe"
+  dependencies:
+    - buildCuda:win
+    
