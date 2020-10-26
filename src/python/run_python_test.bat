@@ -1,1 +1,0 @@
-C:\Anaconda\python.exe test_run.py

@@ -10,8 +10,6 @@
 
 
 struct Parament_Context {
-    bool initialized;
-    
     // Handles
     cublasHandle_t cublasHandle;
 
@@ -27,7 +25,7 @@ struct Parament_Context {
     // Hnorm used for automatically setting the # of iteration cycles
     float Hnorm;
 
-    // Currently initialized time steps
+    // Currently allocated time steps
     unsigned int curr_max_pts;
 
     // Point arrays
@@ -36,9 +34,6 @@ struct Parament_Context {
     cuComplex *X;
     cuComplex *D0;
     cuComplex *D1;
-
-    // check vars
-    bool hamiltonian_is_set;
 
     // BESSEL COEFFICIENTS
     cuComplex *J;
@@ -61,6 +56,5 @@ struct Parament_Context {
     // Iteration cycle number
     unsigned int MMAX;
     bool MMAX_manual;
-
 };
 #endif  // PARAMENT_CONTEXT_H_

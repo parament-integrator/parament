@@ -25,43 +25,34 @@
 
 
 Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
-    struct Parament_Context *paramentHandle = malloc(sizeof(struct Parament_Context));
-    *handle_p = paramentHandle;
-    if (paramentHandle == NULL) {
+    struct Parament_Context *handle = malloc(sizeof(struct Parament_Context));
+    *handle_p = handle;
+    if (handle == NULL) {
         return PARAMENT_STATUS_HOST_ALLOC_FAILED;
     }
 
-    paramentHandle->initialized = false;
-
-    paramentHandle->H0 = NULL;
-    paramentHandle->H1 = NULL;
-    paramentHandle->one_GPU_diag = NULL;
-    paramentHandle->c0 = NULL;
-    paramentHandle->c1 = NULL;
-    paramentHandle->X = NULL;
+    handle->H0 = NULL;
+    handle->H1 = NULL;
+    handle->one_GPU = NULL;
+    handle->one_GPU_diag = NULL;
+    handle->c0 = NULL;
+    handle->c1 = NULL;
+    handle->X = NULL;
 
     // initialize options
-    paramentHandle->MMAX = 11;
-    paramentHandle->MMAX_manual = false;
+    handle->MMAX = 11;
+    handle->MMAX_manual = false;
 
     // BESSEL COEFFICIENTS
-    paramentHandle->alpha = -2.0;
-    paramentHandle->beta = 2.0;
+    handle->alpha = -2.0;
+    handle->beta = 2.0;
 
     // Commonly used constants
-    paramentHandle->zero = make_cuComplex(0,0);
-    paramentHandle->one = make_cuComplex(1,0);
-    paramentHandle->two = make_cuComplex(2,0);
-    paramentHandle->mone = make_cuComplex(-1,0);
-    paramentHandle->mtwo = make_cuComplex(-2,0);
-    return PARAMENT_STATUS_SUCCESS;
-}
-
-Parament_ErrorCode Parament_init(struct Parament_Context *handle) {
-    if (handle->initialized) {
-        handle->lastError = PARAMENT_STATUS_ALREADY_INITIALIZED;
-        return handle->lastError;
-    }
+    handle->zero = make_cuComplex(0,0);
+    handle->one = make_cuComplex(1,0);
+    handle->two = make_cuComplex(2,0);
+    handle->mone = make_cuComplex(-1,0);
+    handle->mtwo = make_cuComplex(-2,0);
 
     // initialize cublas context
     if (CUBLAS_STATUS_SUCCESS != cublasCreate(&(handle->cublasHandle))) {
@@ -74,38 +65,30 @@ Parament_ErrorCode Parament_init(struct Parament_Context *handle) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup2;
     }
-    assert(
-        cudaSuccess == cudaMemcpy(handle->one_GPU, &handle->one, sizeof(cuComplex), cudaMemcpyHostToDevice)
-    );
+    cudaError_t error;
+    error = cudaMemcpy(handle->one_GPU, &handle->one, sizeof(cuComplex), cudaMemcpyHostToDevice);
+    assert(error == cudaSuccess);
 
-    // Bessel coefficients
-    handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
-    if (handle->J == NULL) {
-        handle->lastError = PARAMENT_STATUS_HOST_ALLOC_FAILED;
-        goto error_cleanup3;
-    }
-
-    J_arr(handle->J, handle->MMAX, 2.0);  // compute coefficients
     handle->curr_max_pts = 0; // No points yet allocated
 
     if (cudaSuccess != cudaDeviceGetAttribute(&handle->numSMs, cudaDevAttrMultiProcessorCount, 0)) {
         // TODO (Pol): better error code here. also, make the GPU configurable
         handle->lastError = PARAMENT_FAIL;
-        goto error_cleanup4;
+        goto error_cleanup3;
     }
-
-    handle->initialized = true;
 
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
 
-error_cleanup4:
-    free(handle->J);
 error_cleanup3:
-    assert(cudaSuccess == cudaFree(handle->one_GPU));
+    error = cudaFree(handle->one_GPU);
+    assert(error == cudaSuccess);
 error_cleanup2:
-    assert(CUBLAS_STATUS_SUCCESS == cublasDestroy(handle->cublasHandle));
+    error = cublasDestroy(handle->cublasHandle);
+    assert(error == CUBLAS_STATUS_SUCCESS);
 error_cleanup1:
+    free(handle);
+    *handle_p = NULL;
     return handle->lastError;
 }
 
@@ -113,9 +96,13 @@ error_cleanup1:
  * Frees a previously allocated hamiltionian. No-op if no hamiltonian has been allocated.
  */
 static void freeHamiltonian(struct Parament_Context *handle) {
-    assert(cudaSuccess == cudaFree(handle->H0));
-    assert(cudaSuccess == cudaFree(handle->H1));
-    assert(cudaSuccess == cudaFree(handle->one_GPU_diag));
+    cudaError_t error;
+    error = cudaFree(handle->H0);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->H1);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->one_GPU_diag);
+    assert(error == cudaSuccess);
 
     handle->H0 = NULL;
     handle->H1 = NULL;
@@ -126,11 +113,17 @@ static void freeHamiltonian(struct Parament_Context *handle) {
  * Frees a previously allocated control field and working memory. No-op if no control field has been allocated.
  */
 static void freeWorkingMemory(struct Parament_Context *handle) {
-    assert(cudaSuccess == cudaFree(handle->c0));
-    assert(cudaSuccess == cudaFree(handle->c1)); 
-    assert(cudaSuccess == cudaFree(handle->X));
-    assert(cudaSuccess == cudaFree(handle->D0));
-    assert(cudaSuccess == cudaFree(handle->D1));
+    cudaError_t error;
+    error = cudaFree(handle->c0);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->c1);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->X);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->D0);
+    assert(error == cudaSuccess);
+    error = cudaFree(handle->D1);
+    assert(error == cudaSuccess);
     handle->c0 = NULL;
     handle->c1 = NULL;
     handle->X = NULL;
@@ -143,13 +136,13 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
     if (NULL == handle)
         return PARAMENT_STATUS_SUCCESS;
 
-    if (handle->initialized) {
-        free(handle->J);
-        assert(cudaSuccess == cudaFree(handle->one_GPU));
-        assert(CUBLAS_STATUS_SUCCESS == cublasDestroy(handle->cublasHandle));
-        freeHamiltonian(handle);
-        freeWorkingMemory(handle);
-    }
+    free(handle->J);
+    cudaError_t cudaError = cudaFree(handle->one_GPU);
+    assert(cudaError == cudaSuccess);
+    cublasStatus_t cublasStatus = cublasDestroy(handle->cublasHandle);
+    assert(cublasStatus == CUBLAS_STATUS_SUCCESS);
+    freeHamiltonian(handle);
+    freeWorkingMemory(handle);
     free(handle);
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -171,8 +164,11 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
     }
 
     // Transfer to GPU
-    assert(cudaSuccess == cudaMemcpy(handle->H0, H0, dim * dim * sizeof(cuComplex), cudaMemcpyHostToDevice));
-    assert(cudaSuccess == cudaMemcpy(handle->H1, H1, dim * dim * sizeof(cuComplex), cudaMemcpyHostToDevice));
+    cudaError_t error;
+    error = cudaMemcpy(handle->H0, H0, dim * dim * sizeof(cuComplex), cudaMemcpyHostToDevice);
+    assert(error == cudaSuccess);
+    error = cudaMemcpy(handle->H1, H1, dim * dim * sizeof(cuComplex), cudaMemcpyHostToDevice);
+    assert(error == cudaSuccess);
 
     // Helper Arrays
     if (cudaSuccess != cudaMalloc(&handle->one_GPU_diag, dim * sizeof(cuComplex))) {
@@ -187,7 +183,6 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
     
-
     // nvtxMarkA("Set Hamiltonian routine completed");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
@@ -197,13 +192,40 @@ error_cleanup:
     return handle->lastError;
 }
 
+static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *handle, float dt) {
+    // If enabled, automatically determine number of iterations
+    if (!handle->MMAX_manual){
+        int MMAX_selected;
+        MMAX_selected = Select_Iteration_cycles_fp32(handle->Hnorm, dt);
+        if (MMAX_selected == -1){
+            return PARAMENT_STATUS_SELECT_SMALLER_DT;
+        }
+        
+        handle->MMAX = MMAX_selected;
+    }
+
+    // Allocate Bessel coefficients
+    free(handle->J);
+    handle->J = NULL;
+    handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
+    if (handle->J == NULL) {
+        return PARAMENT_STATUS_HOST_ALLOC_FAILED;
+    }
+
+    // Compute Bessel coefficients
+    for (int k = 0; k < handle->MMAX + 1; k++) {
+        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, 2.0), 0));
+    }
+    return PARAMENT_STATUS_SUCCESS;
+}
+
 static Parament_ErrorCode equipropTransfer(struct Parament_Context *handle, cuComplex *carr, unsigned int pts) {
     // Allocate memory for c arrays if needed
     if (handle->curr_max_pts < pts) {
-        PARAMENT_DEBUG("Need to free c arrays");
+        PARAMENT_DEBUG("Need to free arrays on GPU");
         freeWorkingMemory(handle);
 
-        PARAMENT_DEBUG("Need to malloc c arrays");
+        PARAMENT_DEBUG("Need to malloc arrays on GPU");
         unsigned int dim = handle-> dim;
         if (cudaSuccess != cudaMalloc(&handle->c0, pts * sizeof(cuComplex))
                 || cudaSuccess != cudaMalloc(&handle->c1, pts * sizeof(cuComplex))
@@ -229,7 +251,8 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context *handle, cuCo
     }
 
     // Transfer c1
-    assert(cudaSuccess == cudaMemcpy(handle->c1, carr, pts * sizeof(cuComplex), cudaMemcpyHostToDevice));
+    cudaError_t error = cudaMemcpy(handle->c1, carr, pts * sizeof(cuComplex), cudaMemcpyHostToDevice);
+    assert(error == cudaSuccess);
 
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -284,7 +307,7 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
             error = cublasCscal(handle->cublasHandle, pts*dim*dim, &handle->zero, D0, 1);
             if (error != CUBLAS_STATUS_SUCCESS)
                 return PARAMENT_STATUS_CUBLAS_FAILED;
-        } 
+        }
         else {
             // D0 = D0 + 2 X @ D1 * dt
             error = cublasCgemmStridedBatched(handle->cublasHandle,
@@ -353,7 +376,6 @@ static Parament_ErrorCode equipropReduce(struct Parament_Context *handle, unsign
 
     cublasStatus_t error;
 
-    // Reduction operation:
     int remain_pts = pts;
     int pad = 0;
     while (remain_pts > 1){
@@ -412,54 +434,43 @@ Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *
     return PARAMENT_STATUS_SUCCESS;
 }
 
-Parament_ErrorCode Parament_unsetIterationCycles(struct Parament_Context *handle) {
+Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *handle) {
     handle->MMAX = 11;
     handle->MMAX_manual = false;
     return PARAMENT_STATUS_SUCCESS;
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
-    Parament_ErrorCode error;
-
-    if (handle->MMAX_manual != true){
-        int MMAX_selected;
-        MMAX_selected = Select_Iteration_cycles_fp32(handle->Hnorm, dt);
-        if (MMAX_selected == -1){
-            handle->lastError = PARAMENT_STATUS_SELECT_SMALLER_DT;
-            return handle->lastError;
-        }
-        
-        handle->MMAX = MMAX_selected;
-    }
-
-    error = equipropTransfer(handle, carr, pts);
-    if (PARAMENT_STATUS_SUCCESS != error) {
-        handle->lastError = error;
+    handle->lastError = equipropComputeCoefficients(handle, dt);
+    if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
 
-    error = equipropExpand(handle, pts);
-    if (PARAMENT_STATUS_SUCCESS != error) {
-        handle->lastError = error;
+    handle->lastError = equipropTransfer(handle, carr, pts);
+    if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
 
-    error = equipropPropagate(handle, dt, pts);
-    if (PARAMENT_STATUS_SUCCESS != error) {
-        handle->lastError = error;
+    handle->lastError = equipropExpand(handle, pts);
+    if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
 
-    error = equipropReduce(handle, pts);
-    if (PARAMENT_STATUS_SUCCESS != error) {
-        handle->lastError = error;
+    handle->lastError = equipropPropagate(handle, dt, pts);
+    if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
+        return handle->lastError;
+    }
+
+    handle->lastError = equipropReduce(handle, pts);
+    if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
 
     // transfer back
     const unsigned int dim = handle->dim;
     cuComplex *const D1 = handle->D1;
-    assert(cudaSuccess == cudaMemcpy(out, D1, dim * dim  * sizeof(cuComplex), cudaMemcpyDeviceToHost));
+    cudaError_t cudaError = cudaMemcpy(out, D1, dim * dim  * sizeof(cuComplex), cudaMemcpyDeviceToHost);
+    assert(cudaError == cudaSuccess);
     
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return PARAMENT_STATUS_SUCCESS;
@@ -471,20 +482,20 @@ Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle) {
 
 const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
     switch (errorCode) {
-    PARAMENT_STATUS_SUCCESS:
+    case PARAMENT_STATUS_SUCCESS:
         return "Success";
-    PARAMENT_STATUS_HOST_ALLOC_FAILED:
+    case PARAMENT_STATUS_HOST_ALLOC_FAILED:
         return "Memory allocation on the host failed.";
-    PARAMENT_STATUS_DEVICE_ALLOC_FAILED:
+    case PARAMENT_STATUS_DEVICE_ALLOC_FAILED:
         return "Memory allocation on the device failed.";
-    PARAMENT_STATUS_CUBLAS_INIT_FAILED:
+    case PARAMENT_STATUS_CUBLAS_INIT_FAILED:
         return "Failed to initialize the cuBLAS library.";
-    PARAMENT_STATUS_ALREADY_INITIALIZED:
-        return "Trying to call `Parament_init` with a context that is already initialized.";
-    PARAMENT_STATUS_INVALID_VALUE:
+    case PARAMENT_STATUS_INVALID_VALUE:
         return "Invalid value.";
-    PARAMENT_STATUS_CUBLAS_FAILED:
+    case PARAMENT_STATUS_CUBLAS_FAILED:
         return "Failed to execute cuBLAS function.";
+    case PARAMENT_STATUS_SELECT_SMALLER_DT:
+        return "Timestep too large";
     default:
         return "Unknown error code";
     }
