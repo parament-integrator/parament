@@ -3,6 +3,7 @@
 #include "parament_context.h"
 #include "diagonal_add.h"
 #include "mathhelper.h"
+#include "debugfuncs.h"
 
 #define ENDLINE "\r\n"
 
