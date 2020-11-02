@@ -12,6 +12,10 @@ try:
     H1 = np.array([[0,1],[1,0]])
 
     GPURunner.setHamiltonian(H0,H1)
+
+    output_propagator = GPURunner.equiprop(np.zeros(2),1)
+
+    print(output_propagator)
     GPURunner.destroy()
 except:
     pass

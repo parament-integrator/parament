@@ -43,9 +43,21 @@ class Parament:
         dim = dim[0]
         self.dim = dim
         self._checkError(lib.Parament_setHamiltonian(self._handle, np.complex64(np.asfortranarray(H0)),np.complex64(np.asfortranarray(H1)),dim))
+        logger.debug("Python setHamiltonian completed")
 
-    #def equiprop(self, c: np.ndarray, dt: float):
-    #    if not c.dtype == np.
+
+    def equiprop(self, carr, dt):
+        logger.debug("EQUIPROP PYTHON CALLED")
+        output = np.zeros(self.dim**2,dtype=np.complex64,order='F')
+        print(output)
+        print('--------------')
+        pts = len(carr)
+        print(pts)
+        lib.Parament_equiprop(self._handle,np.complex64(np.asfortranarray(carr)),np.float(dt),np.uint(pts),output)
+        #print(code_out)
+        print(output)
+        print('--------------')
+        return np.reshape(output,(self.dim,self.dim))
 
     def _getErrorMessage(self, code=None):
         if code is None:

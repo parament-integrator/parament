@@ -181,6 +181,8 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         goto error_cleanup;
     }
 
+    printf("Copied to GPU\n");
+	
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
     
@@ -442,10 +444,12 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
+    printf("Equiprop C called\n");
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
+    printf("Finished Computation of coefficients");
 
     handle->lastError = equipropTransfer(handle, carr, pts);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
