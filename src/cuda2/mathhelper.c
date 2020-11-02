@@ -25,7 +25,7 @@ cuComplex imag_power(int k) {
         case 2:
             return make_cuComplex(-1, 0);
         case 3: default:
-            return make_cuComplex(0, -1);
+            return make_cuComplex(0, 1);
     }
 }
 
