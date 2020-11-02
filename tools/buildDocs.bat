@@ -1,5 +1,6 @@
 echo %path%
 python -m venv parament_docs_py
-parament_docs_py\Scripts\activate.bat
-pip install docs/requirements.txt
-docs\make html
+call parament_docs_py\Scripts\activate.bat
+pip install -r docs/requirements.txt
+cd docs
+make html
