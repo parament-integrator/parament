@@ -6,16 +6,15 @@ import parament
 
 import numpy as np
 
-try:
-    GPURunner = parament.Parament()
-    H0 = np.array([[1,0],[0,-1]])
-    H1 = np.array([[0,1],[1,0]])
 
-    GPURunner.setHamiltonian(H0,H1)
+GPURunner = parament.Parament()
+H0 = np.array([[1,0],[0,-1]])
+H1 = np.array([[0,1],[1,0]])
 
-    output_propagator = GPURunner.equiprop(np.zeros(2),1)
+GPURunner.setHamiltonian(H0,H1)
 
-    print(output_propagator)
-    GPURunner.destroy()
-except:
-    pass
+output_propagator = GPURunner.equiprop(np.zeros(2),1)
+
+print(output_propagator)
+input()
+#GPURunner.destroy()
