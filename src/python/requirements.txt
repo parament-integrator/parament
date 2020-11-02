@@ -1,0 +1,5 @@
+wheel
+setuptools
+numpy
+pytest
+pytest-cov

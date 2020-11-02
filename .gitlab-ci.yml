@@ -4,7 +4,7 @@ stages:
 
 buildCuda:win:
   stage: build
-  script: 
+  script:
     - "&tools\\build.bat"
   artifacts:
     paths:
@@ -19,10 +19,26 @@ buildDocs:
     paths:
       - docs/_build/
 
+
+buildPyparament:win:
+  stage: build
+  script:
+    - "&tools\\buildPyparament.bat"
+  artifacts:
+    paths:
+      - src/dist/*.whl
+      - src/dist/parament-*.tar.gz
+
 runTest:win:
   stage: test
   script:
     - ".\\build\\parament.exe"
   dependencies:
     - buildCuda:win
-    
+
+runTestPyparament:win:
+  stage: test
+  script:
+    - "&tools\\runTestPyparament.bat"
+  dependencies:
+    - buildPyparament:win

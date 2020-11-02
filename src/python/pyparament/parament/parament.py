@@ -1,4 +1,5 @@
 import logging
+import os
 import ctypes
 from .errorcodes import *
 import numpy as np
@@ -8,7 +9,21 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 # Todo: switch Win vs Linux
-lib = ctypes.cdll.LoadLibrary('parament.dll')
+USE_SHARED_PARAMENT = os.environ.get("USE_SHARED_PARAMENT")
+
+if os.name == "nt":
+    if not USE_SHARED_PARAMENT:
+        lib_path = os.path.dirname(__file__) + '/parament.dll'
+    else:
+        lib_path = 'parament.dll'  # just search the system path
+
+    try:
+        lib = ctypes.CDLL(lib_path, winmode=0)
+    except TypeError:
+        # the winmode argument has been introduced in Python 3.8
+        lib = ctypes.CDLL(lib_path)
+else:
+    raise RuntimeError("Don't know how to load library on Linux")
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
@@ -42,7 +57,12 @@ class Parament:
         dim = np.shape(H0)
         dim = dim[0]
         self.dim = dim
-        self._checkError(lib.Parament_setHamiltonian(self._handle, np.complex64(np.asfortranarray(H0)),np.complex64(np.asfortranarray(H1)),dim))
+        self._checkError(lib.Parament_setHamiltonian(
+            self._handle,
+            np.complex64(np.asfortranarray(H0)),
+            np.complex64(np.asfortranarray(H1)),
+            dim
+        ))
 
     #def equiprop(self, c: np.ndarray, dt: float):
     #    if not c.dtype == np.

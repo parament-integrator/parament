@@ -1,0 +1,11 @@
+import parament
+import numpy as np
+
+
+def test_wrapper():
+    GPURunner = parament.Parament()
+    H0 = np.array([[1,0],[0,-1]])
+    H1 = np.array([[0,1],[1,0]])
+
+    GPURunner.setHamiltonian(H0, H1)
+    GPURunner.destroy()
