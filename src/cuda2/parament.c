@@ -114,6 +114,7 @@ static void freeHamiltonian(struct Parament_Context *handle) {
  * Frees a previously allocated control field and working memory. No-op if no control field has been allocated.
  */
 static void freeWorkingMemory(struct Parament_Context *handle) {
+    if (handle->curr_max_pts != 0) {
     cudaError_t error;
     error = cudaFree(handle->c0);
     assert(error == cudaSuccess);
@@ -131,6 +132,7 @@ static void freeWorkingMemory(struct Parament_Context *handle) {
     handle->D0 = NULL;
     handle->D1 = NULL;
     handle->curr_max_pts = 0;
+    }
 }
 
 Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
@@ -208,7 +210,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Allocate Bessel coefficients
-    free(handle->J);
+    //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
     handle->J = NULL;
     handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
     if (handle->J == NULL) {
