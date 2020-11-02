@@ -48,11 +48,6 @@ typedef enum Parament_ErrorCode {
     PARAMENT_STATUS_CUBLAS_INIT_FAILED = 30,
 
     /**
-     * Trying to call :c:func:`Parament_init` with a context that is already initialized.
-     */
-    PARAMENT_STATUS_ALREADY_INITIALIZED = 40,
-
-    /**
      * Trying to call a Parament function with an illegal value.
      */
     PARAMENT_STATUS_INVALID_VALUE = 50,
@@ -65,7 +60,7 @@ typedef enum Parament_ErrorCode {
     /**
      * Failed to beform automatic iteration cycles determination.
      */
-    PARAMENT_STATUS_SELECT_SMALLER_DT,
+    PARAMENT_STATUS_SELECT_SMALLER_DT = 70,
 
     /**
      * Place holder for more error codes...
@@ -75,42 +70,29 @@ typedef enum Parament_ErrorCode {
 } Parament_ErrorCode;
 
 /**
- * Create a new (blank) Parament context.
+ * Create a new Parament context.
  * 
  * The context must eventually be destroyed by calling :c:func:`Parament_destroy`.
  *
  * :param handle_p: The new context.
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *   - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when the underlying call to :c:func:`malloc()` failed.
- * 
+ *   - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when an underlying call to :c:func:`malloc()` failed.
+ *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_INIT_FAILED` when Parament fails to initialize a cuBLAS context.
+ *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
+ *   - :c:enumerator:`PARAMENT_FAIL` when an unknown error occurred.
  */
 LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
-
-/**
- * Initialize the Parament context.
- * 
- * This function must be called after :c:func:`Parament_create`.
- *
- * :param handle: Handle to the Parament context.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *   - :c:enumerator:`PARAMENT_STATUS_ALREADY_INITIALIZED` when calling with an already initialized context.
- *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_INIT_FAILED` when Parament fails to initialize a cuBLAS context.
- *   - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when a call to :c:func:`malloc()` failed.
- *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
-  
- */
-LIBSPEC Parament_ErrorCode Parament_init(struct Parament_Context *handle);
 
 /**
  * Destroy the context previously created with :c:func:`Parament_create`.
  * 
  * If the provided handle is `NULL`, this function does nothing.
+ * Using a context after it has been destroyed results in undefined behaviour.
  *
  * :param handle: The context to destroy.
- * 
- * Using a context after it has been destroyed results in undefined behaviour.
+ * :return: 
+ *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
 LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
 
@@ -121,6 +103,10 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
  * :param H0: Drift Hamiltionian. Must be `dim` x `dim` array.
  * :param H1: Interaction Hamiltonian. Must be `dim` x `dim` array.
  * :param dim: Dimension of the Hamiltonians.
+ * :return: 
+ *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
+ *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
 LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuComplex *H0, cuComplex *H1, unsigned int dim);
 
@@ -132,13 +118,18 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *hand
  * :param dt: Time step.
  * :param pts: Number of entries in `carr`.
  * :param out: The returned propagator.
+ * :return: 
+ *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *   - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
+ *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
+ *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
 LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out);
 
-
 /**
  * Get the number of Chebychev cycles for the given Hamiltonian and the given evolution time that are necessary to reach machine precision.
- * Returns -1 if the product of norm and dt is too large to be handled.
+ * 
+ * Returns -1 if the product of norm and dt is too large, and convergence cannot be guaranteed within a reasonable iteration count.
  *  
  * :param H_norm: Operator norm.
  * :param dt: Time step.
@@ -147,26 +138,33 @@ LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cu
 LIBSPEC int Select_Iteration_cycles_fp32(float H_norm, float dt);
 
 /**
- * Manually enforce the number of iteration cycles used for the Chebychev approximation
+ * Manually enforce the number of iteration cycles used for the Chebychev approximation.
  *  
  * :param handle: Handle to the Parament context.
  * :param cycles: Number of iteration cycles.
+ * :return: 
+ *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ * 
+ * .. seealso::
+ *      - :c:func:`Parament_automaticIterationCycles` to restore the default behaviour.
+ * 
  */
 LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *handle, unsigned int cycles);
 
 /**
- * Reenable the automatic choice for the number of iteration cycles used for the Chebychev approximation
+ * Reenable the automatic choice of the number of iteration cycles used for the Chebychev approximation.
  *  
  * :param handle: Handle to the Parament context.
+ * :return: 
+ *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
-LIBSPEC Parament_ErrorCode Parament_unsetIterationCycles(struct Parament_Context *handle);
-
-
+LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *handle);
 
 /**
  * Query the last error code.
  * 
  * :param handle: Handle to the Parament context.
+ * :return: The error code returned by the last Parament call. :c:func:`Parament_peekAtLastError` itself does not overwrite the error code.
  */
 LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
 

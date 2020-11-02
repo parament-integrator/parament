@@ -30,13 +30,6 @@ cuComplex imag_power(int k) {
 }
 
 
-void J_arr(cuComplex* arr, int mmax, double c) {
-    for (int i = 0; i < mmax + 1; i++) {
-        arr[i] = cuCmulf(imag_power(i), make_cuComplex(_jn(i,c), 0));
-    }
-}
-
-
 float OneNorm(cuComplex* mat, unsigned int dim) { 
     float sum = 0; 
     float result = 0;

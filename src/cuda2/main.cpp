@@ -43,9 +43,11 @@ int main(int argc, const char* argv[]) {
     }
 
     Parament_Context* parament;
-    assert(PARAMENT_STATUS_SUCCESS == Parament_create(&parament));
-    assert(PARAMENT_STATUS_SUCCESS == Parament_init(parament));
-    assert(PARAMENT_STATUS_SUCCESS == Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM));
+    Parament_ErrorCode error;
+    error = Parament_create(&parament);
+    assert(error = PARAMENT_STATUS_SUCCESS);
+    error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM);
+    assert(error = PARAMENT_STATUS_SUCCESS);
     
     cuComplex* outputmat = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
     
