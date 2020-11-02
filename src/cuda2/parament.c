@@ -39,6 +39,9 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
     handle->c0 = NULL;
     handle->c1 = NULL;
     handle->X = NULL;
+    handle->D0 = NULL;
+    handle->D1 = NULL;
+    
 
     // initialize options
     handle->MMAX = 11;
