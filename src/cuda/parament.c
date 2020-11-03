@@ -39,6 +39,9 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
     handle->c0 = NULL;
     handle->c1 = NULL;
     handle->X = NULL;
+    handle->D0 = NULL;
+    handle->D1 = NULL;
+    
 
     // initialize options
     handle->MMAX = 11;
@@ -114,6 +117,7 @@ static void freeHamiltonian(struct Parament_Context *handle) {
  * Frees a previously allocated control field and working memory. No-op if no control field has been allocated.
  */
 static void freeWorkingMemory(struct Parament_Context *handle) {
+    if (handle->curr_max_pts != 0) {
     cudaError_t error;
     error = cudaFree(handle->c0);
     assert(error == cudaSuccess);
@@ -131,6 +135,7 @@ static void freeWorkingMemory(struct Parament_Context *handle) {
     handle->D0 = NULL;
     handle->D1 = NULL;
     handle->curr_max_pts = 0;
+    }
 }
 
 Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
@@ -181,6 +186,8 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         goto error_cleanup;
     }
 
+    printf("Copied to GPU\n");
+	
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
     
@@ -206,7 +213,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Allocate Bessel coefficients
-    free(handle->J);
+    //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
     handle->J = NULL;
     handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
     if (handle->J == NULL) {
@@ -442,10 +449,12 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
+    printf("Equiprop C called\n");
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
+    printf("Finished Computation of coefficients");
 
     handle->lastError = equipropTransfer(handle, carr, pts);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {

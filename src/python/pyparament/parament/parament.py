@@ -32,7 +32,7 @@ c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
 lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint]
-lib.Parament_equiprop.argtypes = [c_ParamentContext_p, ctypes.c_void_p, ctypes.c_float, ctypes.c_uint, c_cuComplex_p]
+lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_float, ctypes.c_uint, c_cuComplex_p]
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
 lib.Parament_errorMessage.restype = ctypes.c_char_p
@@ -63,9 +63,15 @@ class Parament:
             np.complex64(np.asfortranarray(H1)),
             dim
         ))
+        logger.debug("Python setHamiltonian completed")
 
-    #def equiprop(self, c: np.ndarray, dt: float):
-    #    if not c.dtype == np.
+    def equiprop(self, carr, dt):
+        logger.debug("EQUIPROP PYTHON CALLED")
+        output = np.zeros(self.dim**2,dtype=np.complex64,order='F')
+        pts = len(carr)
+        carr = np.complex64(carr)
+        self._checkError(lib.Parament_equiprop(self._handle,carr,np.single(dt),np.uint(pts),output))
+        return np.reshape(output,(self.dim,self.dim))
 
     def _getErrorMessage(self, code=None):
         if code is None:

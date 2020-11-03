@@ -8,8 +8,8 @@
 
 using namespace std;
 
-#define TEST_DIM 12
-#define TEST_PTS 80000
+#define TEST_DIM 2
+#define TEST_PTS 2
 
 
 int main(int argc, const char* argv[]) {
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[]) {
     }
     hostH0[0] = make_cuComplex(0,0);
     hostH0[1] = make_cuComplex(1, 0);
-    hostH0[2] = make_cuComplex(1, 0);
+    hostH0[2] = make_cuComplex(-1, 0);
     hostH0[3] = make_cuComplex(0, 0);
     
     for (int i = 0; i < TEST_PTS; i++) {
