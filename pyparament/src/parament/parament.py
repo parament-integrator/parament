@@ -49,14 +49,9 @@ class Parament:
     def equiprop(self, carr, dt):
         logger.debug("EQUIPROP PYTHON CALLED")
         output = np.zeros(self.dim**2,dtype=np.complex64,order='F')
-        print(output)
-        print('--------------')
         pts = len(carr)
-        print(pts)
-        lib.Parament_equiprop(self._handle,np.complex64(np.asfortranarray(carr)),np.float(dt),np.uint(pts),output)
-        #print(code_out)
-        print(output)
-        print('--------------')
+        carr = np.complex64(carr)
+        self._checkError(lib.Parament_equiprop(self._handle,carr,np.single(dt),np.uint(pts),output))
         return np.reshape(output,(self.dim,self.dim))
 
     def _getErrorMessage(self, code=None):
