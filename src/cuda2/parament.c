@@ -155,12 +155,6 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
 
 Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuComplex *H0, cuComplex *H1, unsigned int dim) {
     // Hamiltonian might have been set before, deallocate first
-
-    // Determine norm. We use the 1-norm as an upper limit
-    handle->Hnorm = OneNorm(H0,dim);
-    handle->alpha = -handle->Hnorm;
-    handle->beta = handle->Hnorm;
-
     freeHamiltonian(handle);
 
     handle->dim = dim;
@@ -194,12 +188,12 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
 
     printf("Copied to GPU\n");
 	
-
+    // Determine norm. We use the 1-norm as an upper limit
+    handle->Hnorm = OneNorm(H0,dim);
     
     // nvtxMarkA("Set Hamiltonian routine completed");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
-
 
 error_cleanup:
     freeHamiltonian(handle);
@@ -218,24 +212,18 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
         handle->MMAX = MMAX_selected;
     }
 
-
     // Allocate Bessel coefficients
-    if (handle->J != NULL){
-        free(handle->J); 
-        handle->J = NULL;
-    }
-
+    //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
+    handle->J = NULL;
     handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
     if (handle->J == NULL) {
         return PARAMENT_STATUS_HOST_ALLOC_FAILED;
     }
 
     // Compute Bessel coefficients
-    float x = (handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
-        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
+        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, 2.0), 0));
     }
-
     return PARAMENT_STATUS_SUCCESS;
 }
 
@@ -304,16 +292,7 @@ static Parament_ErrorCode equipropExpand(struct Parament_Context *handle, unsign
         return PARAMENT_STATUS_CUBLAS_FAILED;
     }
 
-    int probe_pts = dim*dim*pts;
-    cuComplex* hostprobe = (cuComplex*)malloc(probe_pts * sizeof(cuComplex));
-    cudaMemcpy(hostprobe, handle->X, probe_pts * sizeof(cuComplex), cudaMemcpyDeviceToHost);
-    printf("\nExpanded Hamiltonian readback\n");
-    printcomplex(hostprobe,probe_pts);
-    free(hostprobe);
-
-
     return PARAMENT_STATUS_SUCCESS;
-    
 }
 
 static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, float dt, unsigned int pts) {
@@ -349,18 +328,13 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
                 D0, dim, dim*dim,
                 pts
             );
-            
             if (error != CUBLAS_STATUS_SUCCESS)
                 return PARAMENT_STATUS_CUBLAS_FAILED;
         }
         
         // D0 = D0 + I*ak
         assert(cudaPeekAtLastError() == cudaSuccess);
-        
-        
-        cuComplex ak = handle->J[k];
-        diagonal_add(ak, D0, pts, handle->numSMs, handle->dim);
-        // TODO: Remove synchronize??
+        diagonal_add(handle->J[k], D0, pts, handle->numSMs, handle->dim);
         cudaDeviceSynchronize();
         assert(cudaPeekAtLastError() == cudaSuccess);
         
@@ -370,8 +344,7 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
         if (k == handle->MMAX - 1) {
             ptr_accumulate = &handle->zero;
             //cublasCscal(handle, pts*dim*dim, &zero, D1, 1);
-        }   
-
+        }         
         if (k == 0){
             ptr_accumulate = &handle->mtwo;
         }
@@ -393,7 +366,6 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
        // D1 = D1 + I*ak'
        assert(cudaPeekAtLastError() == cudaSuccess);
        diagonal_add(handle->J[k], D1, pts, handle->numSMs, handle->dim);
-       // TODO: Remove synchronize??
        cudaDeviceSynchronize();
        assert(cudaPeekAtLastError() == cudaSuccess);
 
@@ -402,15 +374,6 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
        }
     } 
     // D1 contains now the matrix exponentials
-
-    
-    int probe_pts = dim*dim*pts;
-    cuComplex* hostprobe = (cuComplex*)malloc(probe_pts * sizeof(cuComplex));
-    cudaMemcpy(hostprobe, handle->D1, probe_pts * sizeof(cuComplex), cudaMemcpyDeviceToHost);
-    printf("\nArray readback\n");
-    printcomplex(hostprobe,probe_pts);
-    free(hostprobe);
-
     return PARAMENT_STATUS_SUCCESS;
 }
 
@@ -487,20 +450,16 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
     printf("Equiprop C called\n");
-    
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
-    printf("Selected steps %d\n ", handle->MMAX);
+    printf("Finished Computation of coefficients");
 
     handle->lastError = equipropTransfer(handle, carr, pts);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
-
-    printf("Transfer completed");
-
 
     handle->lastError = equipropExpand(handle, pts);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
