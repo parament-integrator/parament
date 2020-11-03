@@ -187,9 +187,12 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
     }
 
     printf("Copied to GPU\n");
-	
+
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
+    handle->alpha = -handle->Hnorm;
+    handle->beta = handle->Hnorm;
+	
     
     // nvtxMarkA("Set Hamiltonian routine completed");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
@@ -221,8 +224,9 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Compute Bessel coefficients
+    float x = (handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
-        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, 2.0), 0));
+        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
     }
     return PARAMENT_STATUS_SUCCESS;
 }
