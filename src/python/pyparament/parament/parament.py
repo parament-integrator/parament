@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import ctypes
 from .errorcodes import *
 import numpy as np
@@ -10,9 +11,12 @@ logger.setLevel(logging.DEBUG)
 
 # Todo: switch Win vs Linux
 USE_SHARED_PARAMENT = os.environ.get("USE_SHARED_PARAMENT")
+PARAMENT_LIB_DIR = os.environ.get("PARAMENT_LIB_DIR")
 
 if os.name == "nt":
-    if not USE_SHARED_PARAMENT:
+    if PARAMENT_LIB_DIR:
+        lib_path = str(pathlib.Path(PARAMENT_LIB_DIR) / 'parament.dll')
+    elif not USE_SHARED_PARAMENT:
         lib_path = os.path.dirname(__file__) + '/parament.dll'
     else:
         lib_path = 'parament.dll'  # just search the system path
@@ -43,8 +47,10 @@ class Parament:
         self._handle = ctypes.c_void_p()
         logger.debug('Created Parament context')
         self._checkError(lib.Parament_create(ctypes.byref(self._handle)))
+        self.dim = 0
 
     def destroy(self):
+        logger.debug('Destroying Parament context')
         self._checkError(lib.Parament_destroy(self._handle))
         self._handle = None
     
@@ -67,11 +73,11 @@ class Parament:
 
     def equiprop(self, carr, dt):
         logger.debug("EQUIPROP PYTHON CALLED")
-        output = np.zeros(self.dim**2,dtype=np.complex64,order='F')
+        output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
         pts = len(carr)
         carr = np.complex64(carr)
-        self._checkError(lib.Parament_equiprop(self._handle,carr,np.single(dt),np.uint(pts),output))
-        return np.reshape(output,(self.dim,self.dim))
+        self._checkError(lib.Parament_equiprop(self._handle, carr, np.single(dt), np.uint(pts), output))
+        return np.reshape(output, (self.dim, self.dim))
 
     def _getErrorMessage(self, code=None):
         if code is None:

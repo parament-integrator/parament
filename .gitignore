@@ -1,3 +1,9 @@
+# Python Virtual environment for building docs
+parament_docs_py/
+
+# Python environment for testing
+parament_py/
+
 # Jetbrains IDE
 .idea
 

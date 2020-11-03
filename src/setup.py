@@ -22,6 +22,7 @@ NVCC_BIN = b"nvcc"
 NVCC_ARGS = (
     b"-lcublas",
     b"-DPARAMENT_BUILD_DLL",
+    b"-DNDEBUG",  # disable assertions and debug messages
     b"--shared",
 )
 

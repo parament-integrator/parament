@@ -18,6 +18,6 @@ Indices and tables
 * :ref:`search`
 
 
-.. autocmodule:: cuda2/parament.h
+.. autocmodule:: cuda/parament.h
    :members:
    :member-order: bysource

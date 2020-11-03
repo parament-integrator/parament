@@ -2,6 +2,7 @@ import parament
 import numpy as np
 import scipy.linalg
 
+
 def test_smoke():
     GPURunner = parament.Parament()
     H0 = np.array([[1,0], [0,-1]])

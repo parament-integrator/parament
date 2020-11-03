@@ -1,5 +1,6 @@
 wheel
 setuptools
 numpy
+scipy
 pytest
 pytest-cov
