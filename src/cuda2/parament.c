@@ -186,7 +186,7 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         goto error_cleanup;
     }
 
-    printf("Copied to GPU\n");
+    PARAMENT_DEBUG("Copied to GPU\n");
 
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
@@ -215,6 +215,8 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
         handle->MMAX = MMAX_selected;
     }
 
+    PARAMENT_DEBUG("MMAX is %d\n",handle->MMAX);
+
     // Allocate Bessel coefficients
     //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
     handle->J = NULL;
@@ -224,7 +226,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Compute Bessel coefficients
-    float x = (handle->beta - handle->alpha)/2;
+    float x = dt*(handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
         handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
     }
@@ -309,7 +311,7 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context *handle, flo
     cublasStatus_t error;
 
     // Rescale dt
-    dt = dt*2/(handle->beta - handle->alpha)*2;
+    dt = 2/(handle->beta - handle->alpha)*2;
     cuComplex dt_complex = make_cuComplex(dt, 0);
 
     cuComplex* ptr_accumulate;
@@ -453,12 +455,12 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
-    printf("Equiprop C called\n");
+    PARAMENT_DEBUG("Equiprop C called\n");
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
-    printf("Finished Computation of coefficients");
+    PARAMENT_DEBUG("Finished Computation of coefficients");
 
     handle->lastError = equipropTransfer(handle, carr, pts);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
