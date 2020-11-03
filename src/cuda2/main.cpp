@@ -8,8 +8,8 @@
 
 using namespace std;
 
-#define TEST_DIM 12
-#define TEST_PTS 80000
+#define TEST_DIM 2
+#define TEST_PTS 2
 
 
 int main(int argc, const char* argv[]) {
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[]) {
     }
     hostH0[0] = make_cuComplex(0,0);
     hostH0[1] = make_cuComplex(1, 0);
-    hostH0[2] = make_cuComplex(1, 0);
+    hostH0[2] = make_cuComplex(-1, 0);
     hostH0[3] = make_cuComplex(0, 0);
     
     for (int i = 0; i < TEST_PTS; i++) {
@@ -45,9 +45,9 @@ int main(int argc, const char* argv[]) {
     Parament_Context* parament;
     Parament_ErrorCode error;
     error = Parament_create(&parament);
-    assert(error = PARAMENT_STATUS_SUCCESS);
+    assert(error == PARAMENT_STATUS_SUCCESS);
     error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM);
-    assert(error = PARAMENT_STATUS_SUCCESS);
+    assert(error == PARAMENT_STATUS_SUCCESS);
     
     cuComplex* outputmat = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
     
