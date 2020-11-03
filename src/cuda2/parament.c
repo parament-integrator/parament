@@ -218,7 +218,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     // Allocate Bessel coefficients
     //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
     handle->J = NULL;
-    handle->J = malloc(sizeof(cuComplex) * handle->MMAX);
+    handle->J = malloc(sizeof(cuComplex) * (handle->MMAX+1));
     if (handle->J == NULL) {
         return PARAMENT_STATUS_HOST_ALLOC_FAILED;
     }
