@@ -1,4 +1,6 @@
 import logging
+import os
+import pathlib
 import ctypes
 from .errorcodes import *
 import numpy as np
@@ -8,7 +10,24 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 # Todo: switch Win vs Linux
-lib = ctypes.cdll.LoadLibrary('parament.dll')
+USE_SHARED_PARAMENT = os.environ.get("USE_SHARED_PARAMENT")
+PARAMENT_LIB_DIR = os.environ.get("PARAMENT_LIB_DIR")
+
+if os.name == "nt":
+    if PARAMENT_LIB_DIR:
+        lib_path = str(pathlib.Path(PARAMENT_LIB_DIR) / 'parament.dll')
+    elif not USE_SHARED_PARAMENT:
+        lib_path = os.path.dirname(__file__) + '/parament.dll'
+    else:
+        lib_path = 'parament.dll'  # just search the system path
+
+    try:
+        lib = ctypes.CDLL(lib_path, winmode=0)
+    except TypeError:
+        # the winmode argument has been introduced in Python 3.8
+        lib = ctypes.CDLL(lib_path)
+else:
+    raise RuntimeError("Don't know how to load library on Linux")
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
@@ -28,8 +47,10 @@ class Parament:
         self._handle = ctypes.c_void_p()
         logger.debug('Created Parament context')
         self._checkError(lib.Parament_create(ctypes.byref(self._handle)))
+        self.dim = 0
 
     def destroy(self):
+        logger.debug('Destroying Parament context')
         self._checkError(lib.Parament_destroy(self._handle))
         self._handle = None
     
@@ -42,17 +63,21 @@ class Parament:
         dim = np.shape(H0)
         dim = dim[0]
         self.dim = dim
-        self._checkError(lib.Parament_setHamiltonian(self._handle, np.complex64(np.asfortranarray(H0)),np.complex64(np.asfortranarray(H1)),dim))
+        self._checkError(lib.Parament_setHamiltonian(
+            self._handle,
+            np.complex64(np.asfortranarray(H0)),
+            np.complex64(np.asfortranarray(H1)),
+            dim
+        ))
         logger.debug("Python setHamiltonian completed")
-
 
     def equiprop(self, carr, dt):
         logger.debug("EQUIPROP PYTHON CALLED")
-        output = np.zeros(self.dim**2,dtype=np.complex64,order='F')
+        output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
         pts = len(carr)
         carr = np.complex64(carr)
-        self._checkError(lib.Parament_equiprop(self._handle,carr,np.single(dt),np.uint(pts),output))
-        return np.reshape(output,(self.dim,self.dim))
+        self._checkError(lib.Parament_equiprop(self._handle, carr, np.single(dt), np.uint(pts), output))
+        return np.reshape(output, (self.dim, self.dim))
 
     def _getErrorMessage(self, code=None):
         if code is None:

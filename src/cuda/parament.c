@@ -1,17 +1,18 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "parament_context.h"
 #include "diagonal_add.h"
 #include "mathhelper.h"
 #include "debugfuncs.h"
 
-#define ENDLINE "\r\n"
+#define ENDLINE "\n"
 
 #ifndef NDEBUG
     #define PARAMENT_DEBUG(...) {\
-        printf("%s", "PARAMENT_DEBUG: ");\
-        printf(__VA_ARGS__);\
-        printf(ENDLINE);\
+        fprintf(stderr, "%s", "PARAMENT_DEBUG: ");\
+        fprintf(stderr, __VA_ARGS__);\
+        fprintf(stderr, ENDLINE);\
     }
 
     #define PARAMENT_ERROR(...) {\
@@ -41,7 +42,7 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
     handle->X = NULL;
     handle->D0 = NULL;
     handle->D1 = NULL;
-    
+    handle->J = NULL;
 
     // initialize options
     handle->MMAX = 11;
@@ -80,7 +81,7 @@ Parament_ErrorCode Parament_create(struct Parament_Context **handle_p) {
         handle->lastError = PARAMENT_FAIL;
         goto error_cleanup3;
     }
-
+    PARAMENT_DEBUG("created Parament context");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
 
@@ -101,10 +102,13 @@ error_cleanup1:
  */
 static void freeHamiltonian(struct Parament_Context *handle) {
     cudaError_t error;
+    PARAMENT_DEBUG("Freeing handle->H0 =0x%x", handle->H0);
     error = cudaFree(handle->H0);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->H1 = 0x%x", handle->H1);
     error = cudaFree(handle->H1);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->one_GPU_diag = 0x%x", handle->one_GPU_diag);
     error = cudaFree(handle->one_GPU_diag);
     assert(error == cudaSuccess);
 
@@ -119,14 +123,19 @@ static void freeHamiltonian(struct Parament_Context *handle) {
 static void freeWorkingMemory(struct Parament_Context *handle) {
     if (handle->curr_max_pts != 0) {
     cudaError_t error;
+    PARAMENT_DEBUG("Freeing handle->c0: 0x%x", handle->c0);
     error = cudaFree(handle->c0);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->c1: 0x%x", handle->c1);
     error = cudaFree(handle->c1);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->X: 0x%x", handle->X);
     error = cudaFree(handle->X);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->D0: 0x%x", handle->D0);
     error = cudaFree(handle->D0);
     assert(error == cudaSuccess);
+    PARAMENT_DEBUG("Freeing handle->D1: 0x%x", handle->D1);
     error = cudaFree(handle->D1);
     assert(error == cudaSuccess);
     handle->c0 = NULL;
@@ -139,12 +148,18 @@ static void freeWorkingMemory(struct Parament_Context *handle) {
 }
 
 Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
+    cudaError_t cudaError;
+    cudaError = cudaDeviceSynchronize();
+    assert(cudaError == cudaSuccess);
     if (NULL == handle)
         return PARAMENT_STATUS_SUCCESS;
 
+    PARAMENT_DEBUG("Freeing J =0x%x", handle->J);
     free(handle->J);
-    cudaError_t cudaError = cudaFree(handle->one_GPU);
+    PARAMENT_DEBUG("Freeing handle->one_GPU = 0x%x", handle->one_GPU);
+    cudaError = cudaFree(handle->one_GPU);
     assert(cudaError == cudaSuccess);
+    PARAMENT_DEBUG("destroying cublasHandle = 0x%x", handle->cublasHandle);
     cublasStatus_t cublasStatus = cublasDestroy(handle->cublasHandle);
     assert(cublasStatus == CUBLAS_STATUS_SUCCESS);
     freeHamiltonian(handle);
@@ -186,7 +201,11 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         goto error_cleanup;
     }
 
+<<<<<<< HEAD:src/cuda2/parament.c
     PARAMENT_DEBUG("Copied to GPU\n");
+=======
+    PARAMENT_DEBUG("Copied to GPU");
+>>>>>>> python-setup:src/cuda/parament.c
 
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
@@ -218,7 +237,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     PARAMENT_DEBUG("MMAX is %d\n",handle->MMAX);
 
     // Allocate Bessel coefficients
-    //free(handle->J); // TODO: CAUSES PROGRAM TO FAIL IF ACTIVATED???
+    free(handle->J);
     handle->J = NULL;
     handle->J = malloc(sizeof(cuComplex) * (handle->MMAX+1));
     if (handle->J == NULL) {
@@ -226,8 +245,13 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Compute Bessel coefficients
+<<<<<<< HEAD:src/cuda2/parament.c
     float x = dt*(handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
+=======
+    float x = (handle->beta - handle->alpha)/2;
+    for (int k = 0; k < handle->MMAX; k++) {
+>>>>>>> python-setup:src/cuda/parament.c
         handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
     }
     return PARAMENT_STATUS_SUCCESS;
@@ -455,7 +479,11 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
+<<<<<<< HEAD:src/cuda2/parament.c
     PARAMENT_DEBUG("Equiprop C called\n");
+=======
+    PARAMENT_DEBUG("Equiprop C called");
+>>>>>>> python-setup:src/cuda/parament.c
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
