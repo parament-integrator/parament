@@ -201,11 +201,7 @@ Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuCo
         goto error_cleanup;
     }
 
-<<<<<<< HEAD:src/cuda2/parament.c
-    PARAMENT_DEBUG("Copied to GPU\n");
-=======
     PARAMENT_DEBUG("Copied to GPU");
->>>>>>> python-setup:src/cuda/parament.c
 
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
@@ -245,13 +241,8 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context *h
     }
 
     // Compute Bessel coefficients
-<<<<<<< HEAD:src/cuda2/parament.c
     float x = dt*(handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
-=======
-    float x = (handle->beta - handle->alpha)/2;
-    for (int k = 0; k < handle->MMAX; k++) {
->>>>>>> python-setup:src/cuda/parament.c
         handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
     }
     return PARAMENT_STATUS_SUCCESS;
@@ -479,11 +470,7 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out) {
-<<<<<<< HEAD:src/cuda2/parament.c
-    PARAMENT_DEBUG("Equiprop C called\n");
-=======
     PARAMENT_DEBUG("Equiprop C called");
->>>>>>> python-setup:src/cuda/parament.c
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
