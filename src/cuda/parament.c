@@ -102,13 +102,13 @@ error_cleanup1:
  */
 static void freeHamiltonian(struct Parament_Context *handle) {
     cudaError_t error;
-    PARAMENT_DEBUG("Freeing handle->H0 =0x%x", handle->H0);
+    PARAMENT_DEBUG("Freeing handle->H0 = 0x%p", handle->H0);
     error = cudaFree(handle->H0);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->H1 = 0x%x", handle->H1);
+    PARAMENT_DEBUG("Freeing handle->H1 = 0x%p", handle->H1);
     error = cudaFree(handle->H1);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->one_GPU_diag = 0x%x", handle->one_GPU_diag);
+    PARAMENT_DEBUG("Freeing handle->one_GPU_diag = 0x%p", handle->one_GPU_diag);
     error = cudaFree(handle->one_GPU_diag);
     assert(error == cudaSuccess);
 
@@ -123,19 +123,19 @@ static void freeHamiltonian(struct Parament_Context *handle) {
 static void freeWorkingMemory(struct Parament_Context *handle) {
     if (handle->curr_max_pts != 0) {
     cudaError_t error;
-    PARAMENT_DEBUG("Freeing handle->c0: 0x%x", handle->c0);
+    PARAMENT_DEBUG("Freeing handle->c0: 0x%p", handle->c0);
     error = cudaFree(handle->c0);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->c1: 0x%x", handle->c1);
+    PARAMENT_DEBUG("Freeing handle->c1: 0x%p", handle->c1);
     error = cudaFree(handle->c1);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->X: 0x%x", handle->X);
+    PARAMENT_DEBUG("Freeing handle->X: 0x%p", handle->X);
     error = cudaFree(handle->X);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->D0: 0x%x", handle->D0);
+    PARAMENT_DEBUG("Freeing handle->D0: 0x%p", handle->D0);
     error = cudaFree(handle->D0);
     assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->D1: 0x%x", handle->D1);
+    PARAMENT_DEBUG("Freeing handle->D1: 0x%p", handle->D1);
     error = cudaFree(handle->D1);
     assert(error == cudaSuccess);
     handle->c0 = NULL;
@@ -154,12 +154,12 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context *handle) {
     if (NULL == handle)
         return PARAMENT_STATUS_SUCCESS;
 
-    PARAMENT_DEBUG("Freeing J =0x%x", handle->J);
+    PARAMENT_DEBUG("Freeing J = 0x%p", handle->J);
     free(handle->J);
-    PARAMENT_DEBUG("Freeing handle->one_GPU = 0x%x", handle->one_GPU);
+    PARAMENT_DEBUG("Freeing handle->one_GPU = 0x%p", handle->one_GPU);
     cudaError = cudaFree(handle->one_GPU);
     assert(cudaError == cudaSuccess);
-    PARAMENT_DEBUG("destroying cublasHandle = 0x%x", handle->cublasHandle);
+    PARAMENT_DEBUG("destroying cublasHandle = 0x%p", handle->cublasHandle);
     cublasStatus_t cublasStatus = cublasDestroy(handle->cublasHandle);
     assert(cublasStatus == CUBLAS_STATUS_SUCCESS);
     freeHamiltonian(handle);
