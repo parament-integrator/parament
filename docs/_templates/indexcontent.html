@@ -1,0 +1,26 @@
+{#
+  Loosely inspired by the deprecated sphinx/themes/basic/defindex.html
+#}
+{%- extends "layout.html" %}
+{% set title = _('Overview') %}
+{% block body %}
+<h1>{{ docstitle|e }}</h1>
+<p>
+  Welcome! This is the documentation for Parament {{ release|e }}</p>
+</p>
+<table class="contentstable" align="center"><tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/whatisparament") }}">What is Parament?</a><br/>
+	<span class="linkdescr">And what it is for</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/installation") }}/">Installation</a><br/>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/quickstart") }}">Quickstart</a><br/>
+    <span class="linkdescr">Leverage Parament from Python or Matlab</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("user/algorithm") }}">Algorithm</a><br/>
+	<span class="linkdescr">Learn about the algorithm driving Parament</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("reference/index") }}">API reference</a><br/>
+        <span class="linkdescr">Automatically generated reference documentation</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("glossary") }}">Glossary</a><br/>
+        <span class="linkdescr">List of the most important terms</span></p>
+  </td></tr>
+</table>
+{% endblock %}

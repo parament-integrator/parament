@@ -1,23 +1,18 @@
-.. rtd-test-parament documentation master file, created by
-   sphinx-quickstart on Thu Jul  9 14:02:28 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to rtd-test-parament's documentation!
-=============================================
+Documentation of Parament
+=========================
+**Date**: |today| **Version**: |release|
+
+Parament is a GPU-accelerated solver for time-dependent linear differential equations.
+Notably, it solves the Schrödinger's equation with arbitrary time-dependent control terms.
+Parament is open-source and is released under the Apache Licence.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 2
+
+    user/index
+    reference/index
+    dev
+    glossary
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
-
-
-.. autocmodule:: cuda/parament.h
-   :members:
-   :member-order: bysource
