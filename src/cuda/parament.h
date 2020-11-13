@@ -58,10 +58,15 @@ typedef enum Parament_ErrorCode {
     PARAMENT_STATUS_CUBLAS_FAILED = 60,
 
     /**
-     * Failed to beform automatic iteration cycles determination.
+     * Failed to perform automatic iteration cycles determination.
      */
     PARAMENT_STATUS_SELECT_SMALLER_DT = 70,
 
+    /**
+     * Trying to call :c:func:`Parament_equiprop` without having loaded a Hamiltonian via
+     * :c:func:`Parament_setHamiltonian`.
+     */
+    PARAMENT_STATUS_NO_HAMILTONIAN = 80,
     /**
      * Place holder for more error codes...
      */
@@ -123,6 +128,7 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *hand
  * :param out: The returned propagator.
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *   - :c:enumerator:`PARAMENT_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see :c:func:`Parament_setHamiltonian`).
  *   - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.

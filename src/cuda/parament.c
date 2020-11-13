@@ -471,6 +471,10 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *ha
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out) {
     PARAMENT_DEBUG("Equiprop C called");
+    if (handle->H0 == NULL) {
+        handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
+        return handle->lastError;
+    }
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
