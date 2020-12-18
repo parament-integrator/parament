@@ -159,7 +159,7 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) 
     if (NULL == handle)
         return PARAMENT_STATUS_SUCCESS;
 
-    PARAMENT_DEBUG("Freeing J =0x%p", handle->J);
+    PARAMENT_DEBUG("Freeing J = 0x%p", handle->J);
     free(handle->J);
     PARAMENT_DEBUG("Freeing handle->one_GPU = 0x%p", handle->one_GPU);
     cudaError = cudaFree(handle->one_GPU);
@@ -175,7 +175,7 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) 
 
 template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
-        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim) {
+        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps) {
     // Hamiltonian might have been set before, deallocate first
     freeHamiltonian(handle);
 
@@ -186,7 +186,7 @@ Parament_ErrorCode Parament_setHamiltonian(
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup;
     }
-    if (cudaSuccess != cudaMalloc(&handle->H1, dim * dim * sizeof(complex_t))) {
+    if (cudaSuccess != cudaMalloc(&handle->H1, dim * dim * amps * sizeof(complex_t))) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup;
     }
@@ -195,7 +195,7 @@ Parament_ErrorCode Parament_setHamiltonian(
     cudaError_t error;
     error = cudaMemcpy(handle->H0, H0, dim * dim * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
-    error = cudaMemcpy(handle->H1, H1, dim * dim * sizeof(complex_t), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(handle->H1, H1, dim * dim * amps * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
     // Helper Arrays
@@ -239,6 +239,8 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context<co
         handle->MMAX = MMAX_selected;
     }
 
+    PARAMENT_DEBUG("MMAX is %d\n",handle->MMAX);
+
     // Allocate Bessel coefficients
     free(handle->J);
     handle->J = NULL;
@@ -249,7 +251,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context<co
     }
 
     // Compute Bessel coefficients
-    float x = (handle->beta - handle->alpha)/2;
+    float x = dt*(handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
         handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
     }
@@ -257,7 +259,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context<co
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *handle, complex_t *carr, unsigned int pts) {
+static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *handle, complex_t *carr, unsigned int pts, unsigned int amps) {
     // Allocate memory for c arrays if needed
     if (handle->curr_max_pts < pts) {
         PARAMENT_DEBUG("Need to free arrays on GPU");
@@ -266,7 +268,7 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
         PARAMENT_DEBUG("Need to malloc arrays on GPU");
         unsigned int dim = handle-> dim;
         if (cudaSuccess != cudaMalloc(&handle->c0, pts * sizeof(complex_t))
-                || cudaSuccess != cudaMalloc(&handle->c1, pts * sizeof(complex_t))
+                || cudaSuccess != cudaMalloc(&handle->c1, pts * amps * sizeof(complex_t))
                 || cudaSuccess != cudaMalloc(&handle->X, dim * dim * pts * sizeof(complex_t))
                 || cudaSuccess != cudaMalloc(&handle->D0, dim * dim * pts * sizeof(complex_t))
                 || cudaSuccess != cudaMalloc(&handle->D1, dim * dim * pts * sizeof(complex_t))) {
@@ -290,14 +292,14 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
     }
 
     // Transfer c1
-    cudaError_t error = cudaMemcpy(handle->c1, carr, pts * sizeof(complex_t), cudaMemcpyHostToDevice);
+    cudaError_t error = cudaMemcpy(handle->c1, carr, amps * pts * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
     return PARAMENT_STATUS_SUCCESS;
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts) {
+static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps) {
     unsigned int dim = handle->dim;
     cublasStatus_t error;
     error = cublasCgemm(handle->cublasHandle,
@@ -313,11 +315,11 @@ static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *han
     }
 
     error = cublasCgemm(handle->cublasHandle,
-        CUBLAS_OP_N, CUBLAS_OP_N,
-        dim*dim, pts, 1,
+        CUBLAS_OP_N, CUBLAS_OP_T,
+        dim*dim, pts, amps,
         &handle->one,
         handle->H1, dim*dim,
-        handle->c1, 1,
+        handle->c1, pts,
         &handle->one,
         handle->X, dim*dim);
     if (error != CUBLAS_STATUS_SUCCESS) {
@@ -338,7 +340,7 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context<complex_t> *
     cublasStatus_t error;
 
     // Rescale dt
-    dt = dt*2/(handle->beta - handle->alpha)*2;
+    dt = 2/(handle->beta - handle->alpha)*2;
     complex_t dt_complex = make_cuComplex(dt, 0);
 
     complex_t* ptr_accumulate;
@@ -485,20 +487,24 @@ Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context<com
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle, complex_t *carr, float dt, unsigned int pts, complex_t *out) {
+Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle, complex_t *carr, float dt, unsigned int pts, unsigned int amps, complex_t *out) {
     PARAMENT_DEBUG("Equiprop C called");
+    if (handle->H0 == NULL) {
+        handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
+        return handle->lastError;
+    }
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
     PARAMENT_DEBUG("Finished Computation of coefficients");
 
-    handle->lastError = equipropTransfer(handle, carr, pts);
+    handle->lastError = equipropTransfer(handle, carr, pts, amps);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
 
-    handle->lastError = equipropExpand(handle, pts);
+    handle->lastError = equipropExpand(handle, pts, amps);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
@@ -564,13 +570,13 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle) {
 }
 
 Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-        unsigned int dim) {
-    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim);
+        unsigned int dim, unsigned int amps) {
+    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps);
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,
-        cuComplex *out) {
-    return Parament_equiprop<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), carr, dt, pts, out);
+        unsigned int amps, cuComplex *out) {
+    return Parament_equiprop<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), carr, dt, pts, amps, out);
 }
 
 Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context_f32 *handle, unsigned int cycles) {

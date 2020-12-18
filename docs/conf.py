@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'rtd-test-parament'
-copyright = '2020, Pol Welter'
-author = 'Pol Welter'
+project = 'Parament'
+copyright = '2020, Spin Physics & Imaging Lab, ETH Zurich'
+author = 'Konstantin Herb & Pol Welter'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1'
@@ -34,6 +34,7 @@ master_doc = 'index'
 extensions = [
     "sphinx_rtd_theme",
     "sphinx_c_autodoc",
+    "sphinx.ext.mathjax"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -51,9 +52,12 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-html_theme = "sphinx_rtd_theme"
-
-
+# html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
+html_additional_pages = {
+    'index': 'indexcontent.html',
+}
+html_last_updated_fmt = "%b %m, %Y"
 
 
 # -- Configure C Autodoc -----------------------------------------------------

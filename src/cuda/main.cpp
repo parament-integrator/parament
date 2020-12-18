@@ -46,7 +46,7 @@ int main(int argc, const char* argv[]) {
     Parament_ErrorCode error;
     error = Parament_create(&parament);
     assert(error == PARAMENT_STATUS_SUCCESS);
-    error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM);
+    error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM, 1);
     assert(error == PARAMENT_STATUS_SUCCESS);
     
     cuComplex* outputmat = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
@@ -54,7 +54,7 @@ int main(int argc, const char* argv[]) {
     for (int i=0;i<3;i++){
         cout << "Now doing run #";
         cout << i << endl;
-        Parament_equiprop(parament, hostc1, 0.1, TEST_PTS, outputmat);
+        Parament_equiprop(parament, hostc1, 0.1, TEST_PTS, 1, outputmat);
     }
     //printcomplex(outputmat,TEST_DIM*TEST_DIM);
     cout << "Finished!" <<endl;

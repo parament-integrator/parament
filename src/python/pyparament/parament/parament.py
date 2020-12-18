@@ -36,8 +36,8 @@ c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
-lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint]
-lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_float, ctypes.c_uint, c_cuComplex_p]
+lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint]
+lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_float, ctypes.c_uint, ctypes.c_uint, c_cuComplex_p]
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
 lib.Parament_errorMessage.restype = ctypes.c_char_p
@@ -63,21 +63,28 @@ class Parament:
         # todo: input validation...
         dim = np.shape(H0)
         dim = dim[0]
+        amps = np.shape(H1)
+        if len(amps) > 2:
+            amps = amps[2]
+        else:
+            amps = 1
+
         self.dim = dim
+        self.amps = amps
         self._checkError(lib.Parament_setHamiltonian(
             self._handle,
             np.complex64(np.asfortranarray(H0)),
             np.complex64(np.asfortranarray(H1)),
-            dim
+            dim,amps,
         ))
         logger.debug("Python setHamiltonian completed")
 
     def equiprop(self, carr, dt):
         logger.debug("EQUIPROP PYTHON CALLED")
         output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
-        pts = len(carr)
+        pts = np.shape(carr)[0]
         carr = np.complex64(carr)
-        self._checkError(lib.Parament_equiprop(self._handle, carr, np.single(dt), np.uint(pts), output))
+        self._checkError(lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.single(dt), np.uint(pts), np.uint(self.amps), output))
         return np.reshape(output, (self.dim, self.dim))
 
     def _getErrorMessage(self, code=None):

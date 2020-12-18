@@ -59,10 +59,15 @@ typedef enum Parament_ErrorCode {
     PARAMENT_STATUS_CUBLAS_FAILED = 60,
 
     /**
-     * Failed to beform automatic iteration cycles determination.
+     * Failed to perform automatic iteration cycles determination.
      */
     PARAMENT_STATUS_SELECT_SMALLER_DT = 70,
 
+    /**
+     * Trying to call :c:func:`Parament_equiprop` without having loaded a Hamiltonian via
+     * :c:func:`Parament_setHamiltonian`.
+     */
+    PARAMENT_STATUS_NO_HAMILTONIAN = 80,
     /**
      * Place holder for more error codes...
      */
@@ -104,12 +109,14 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle)
  * :param H0: Drift Hamiltionian. Must be `dim` x `dim` array.
  * :param H1: Interaction Hamiltonian. Must be `dim` x `dim` array.
  * :param dim: Dimension of the Hamiltonians.
+ * :param amps: number of the control amplitudes
+ * 
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim);
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps);
 
 /**
  * Compute the propagator from the Hamiltionian.
@@ -117,15 +124,18 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  * :param context: Handle to the Parament context.
  * :param carr: Array of the control field amplitudes.
  * :param dt: Time step.
- * :param pts: Number of entries in `carr`.
+ * :param pts: Number of entries per single control vector in `carr`.
+ * :param amps: Number of control Hamiltonians
  * :param out: The returned propagator.
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *   - :c:enumerator:`PARAMENT_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see :c:func:`Parament_setHamiltonian`).
  *   - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, cuComplex *out);
+LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
+
 
 /**
  * Get the number of Chebychev cycles for the given Hamiltonian and the given evolution time that are necessary to reach machine precision.

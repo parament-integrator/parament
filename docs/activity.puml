@@ -1,0 +1,23 @@
+@startuml
+start
+:Create Parament context
+""Parament_create()"";
+
+repeat :Specify Hamiltonian\n""Parament_loadHamiltionian()"";
+    if () then (default)
+    elseif ()
+      :Manually specify iteration count
+      ""Parament_setIterationCyclesManually()"";
+    else ()
+      :Re-enable automatic iteration count
+      ""Parament_automaticIterationCycles()"";
+    endif
+    repeat :Run the solver with a given\nvector of control amplitudes\n""Parament_equiprop()"";
+    #palegreen:OK;
+    repeat while (different control field?)
+repeat while (other Hamiltonian?)
+
+:Cleanup
+""Parament_destroy()"";
+stop
+@enduml
