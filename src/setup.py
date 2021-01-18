@@ -14,7 +14,7 @@ CUDA_SRC_FILES = (
     b"deviceinfo.c",
     b"diagonal_add.cu",
     b"mathhelper.c",
-    b"parament.c",
+    b"parament.cpp",
     b"printFuncs.c",
     b"debugfuncs.c",
 )

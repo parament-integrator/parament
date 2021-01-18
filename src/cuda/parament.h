@@ -6,18 +6,19 @@ extern "C" {
 #endif
 
 #ifdef PARAMENT_BUILD_DLL
-#define LIBSPEC __declspec(dllexport)
+    #define LIBSPEC __declspec(dllexport)
 #elif defined(PARAMENT_LINK)
-#define LIBSPEC 
+    #define LIBSPEC
 #else
-#define LIBSPEC __declspec(dllimport)
+    #define LIBSPEC __declspec(dllimport)
 #endif
 
 #ifndef NO_CUDA_STUBS
-typedef struct cuComplex cuComplex;
+    typedef struct cuComplex cuComplex;
+    typedef struct cuDoubleComplex cuDoubleComplex;
 #endif  // NO_CUDA_STUBS
 
-struct Parament_Context;
+struct Parament_Context_f32;
 
 /**
  * Error codes returned by Parament.
@@ -87,7 +88,7 @@ typedef enum Parament_ErrorCode {
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
  *   - :c:enumerator:`PARAMENT_FAIL` when an unknown error occurred.
  */
-LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
+LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_p);
 
 /**
  * Destroy the context previously created with :c:func:`Parament_create`.
@@ -99,7 +100,7 @@ LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context **handle_p);
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
-LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle);
 
 /**
  * Load a Hamiltonian.
@@ -115,7 +116,7 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context *handle);
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps);
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps);
 
 /**
  * Compute the propagator from the Hamiltionian.
@@ -133,7 +134,8 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context *hand
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
+LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
+
 
 /**
  * Get the number of Chebychev cycles for the given Hamiltonian and the given evolution time that are necessary to reach machine precision.
@@ -144,7 +146,7 @@ LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context *handle, cu
  * :param dt: Time step.
  * :param out: Number of iteration cycles.
  */
-LIBSPEC int Select_Iteration_cycles_fp32(float H_norm, float dt);
+LIBSPEC int Parament_selectIterationCycles_fp32(float H_norm, float dt);
 
 /**
  * Manually enforce the number of iteration cycles used for the Chebychev approximation.
@@ -158,7 +160,7 @@ LIBSPEC int Select_Iteration_cycles_fp32(float H_norm, float dt);
  *      - :c:func:`Parament_automaticIterationCycles` to restore the default behaviour.
  * 
  */
-LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context *handle, unsigned int cycles);
+LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context_f32 *handle, unsigned int cycles);
 
 /**
  * Reenable the automatic choice of the number of iteration cycles used for the Chebychev approximation.
@@ -167,7 +169,7 @@ LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_C
  * :return: 
  *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
-LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context_f32 *handle);
 
 /**
  * Query the last error code.
@@ -175,7 +177,7 @@ LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Con
  * :param handle: Handle to the Parament context.
  * :return: The error code returned by the last Parament call. :c:func:`Parament_peekAtLastError` itself does not overwrite the error code.
  */
-LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context *handle);
+LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 *handle);
 
 /**
  * Get human readable message from error code.

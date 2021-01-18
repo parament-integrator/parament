@@ -13,6 +13,7 @@ logger.setLevel(logging.DEBUG)
 USE_SHARED_PARAMENT = os.environ.get("USE_SHARED_PARAMENT")
 PARAMENT_LIB_DIR = os.environ.get("PARAMENT_LIB_DIR")
 
+
 if os.name == "nt":
     if PARAMENT_LIB_DIR:
         lib_path = str(pathlib.Path(PARAMENT_LIB_DIR) / 'parament.dll')
@@ -91,8 +92,8 @@ class Parament:
             code = lib.Parament_getLastError(self._handle)
         return lib.Parament_errorMessage(code).decode()
 
-    def _checkError(self, errorCode):
-        if errorCode == PARAMENT_STATUS_SUCCESS:
+    def _checkError(self, error_code):
+        if error_code == PARAMENT_STATUS_SUCCESS:
             return
         try:
             exceptionClass = {
@@ -103,9 +104,9 @@ class Parament:
                 PARAMENT_STATUS_CUBLAS_FAILED: RuntimeError,
                 PARAMENT_STATUS_SELECT_SMALLER_DT: RuntimeError,
                 PARAMENT_FAIL: RuntimeError,
-            }[errorCode]
+            }[error_code]
         except KeyError as e:
             raise AssertionError('Unknown error code ') from e
 
-        message = self._getErrorMessage(errorCode)
-        raise exceptionClass(f"Error code {errorCode}: {message}")
+        message = self._getErrorMessage(error_code)
+        raise exceptionClass(f"Error code {error_code}: {message}")

@@ -42,7 +42,7 @@ int main(int argc, const char* argv[]) {
         hostc1[i] = make_cuComplex(0, 0);
     }
 
-    Parament_Context* parament;
+    Parament_Context_f32* parament;
     Parament_ErrorCode error;
     error = Parament_create(&parament);
     assert(error == PARAMENT_STATUS_SUCCESS);
