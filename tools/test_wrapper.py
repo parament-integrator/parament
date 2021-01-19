@@ -1,7 +1,15 @@
 import sys
 import os
-sys.path.insert(0,r'.\pyparament\src')
-os.environ['PATH'] = os.getcwd() + '\\build' + ';\r\n' + os.environ['PATH']
+sys.path.append(os.path.abspath(r'./src/python/pyparament/'))
+os.environ['PARAMENT_LIB_DIR'] = os.path.abspath(r'./build')
+
+import sys
+import pprint
+
+# pretty print module search paths
+pprint.pprint(sys.path)
+
+
 import parament
 
 import numpy as np
