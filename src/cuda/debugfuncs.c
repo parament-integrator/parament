@@ -1,11 +1,21 @@
-#include <stdlib.h>
 #include <cublas_v2.h>
-#include "printFuncs.h"
+#include <stdlib.h>
+
+#define NO_CUDA_STUBS
+
+#include "debugfuncs.h"
 
 void readback(cuComplex *test, unsigned int dim){
-    cuComplex* hostprobe = malloc(dim * dim * sizeof(cuComplex));
-    cudaMemcpy(hostprobe, test, dim * dim * sizeof(cuComplex), cudaMemcpyDeviceToHost);
+    int len = dim * sizeof(cuComplex);
+    cuComplex* hostprobe = (cuComplex *)malloc(len);
+    printf("--------------\n");
+
+    printf("Readback of 0x%p\n", test);
+    
+    cudaMemcpy(hostprobe, test, dim * sizeof(cuComplex), cudaMemcpyDeviceToHost);
     printf("Array\n");
-    printcomplex(hostprobe, dim*dim);
+    printcomplex(hostprobe, dim);
+    printf("--------------\n");
+    
     free(hostprobe);
 }
