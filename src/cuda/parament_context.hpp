@@ -56,6 +56,9 @@ template<typename complex_t> struct Parament_Context {
     // Iteration cycle number
     unsigned int MMAX;
     bool MMAX_manual;
+
+    // Integration parameters
+    bool enable_magnus;
 };
 
 #endif  // PARAMENT_CONTEXT_H_

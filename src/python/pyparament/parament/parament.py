@@ -36,7 +36,7 @@ c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
-lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint]
+lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool]
 lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_float, ctypes.c_uint, ctypes.c_uint, c_cuComplex_p]
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
@@ -59,7 +59,7 @@ class Parament:
         if self._handle is not None:
             self.destroy()
     
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray):
+    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False):
         # todo: input validation...
         dim = np.shape(H0)
         dim = dim[0]
@@ -75,7 +75,7 @@ class Parament:
             self._handle,
             np.complex64(np.asfortranarray(H0)),
             np.complex64(np.asfortranarray(H1)),
-            dim,amps,
+            dim,amps,use_magnus
         ))
         logger.debug("Python setHamiltonian completed")
 

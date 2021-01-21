@@ -175,27 +175,53 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) 
 
 template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
-        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps) {
+        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps, bool use_magnus) {
     // Hamiltonian might have been set before, deallocate first
     freeHamiltonian(handle);
 
     handle->dim = dim;
+
+        if (use_magnus) {
+        PARAMENT_DEBUG("Magnus enabled");
+        handle->enable_magnus = true;
+    }
+    else
+    {
+        handle->enable_magnus = false;
+    }
+
+    int H1memory;
+
+    if (use_magnus) {
+        // amps*(amps-1)/2 pairwise commutators + amps commutators with H0 + amps "real control Hamiltonians"
+        H1memory = dim * dim * sizeof(cuComplex) * ( 2*amps + amps*(amps-1)/2 );
+
+    }
+    else
+    {
+        H1memory = dim * dim * amps * sizeof(cuComplex);
+    }
+    
 
     // Allocate GPU memory
     if (cudaSuccess != cudaMalloc(&handle->H0, dim * dim * sizeof(complex_t))) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup;
     }
-    if (cudaSuccess != cudaMalloc(&handle->H1, dim * dim * amps * sizeof(complex_t))) {
+
+    if (cudaSuccess != cudaMalloc(&handle->H1, H1memory)) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup;
     }
+
+    
 
     // Transfer to GPU
     cudaError_t error;
     error = cudaMemcpy(handle->H0, H0, dim * dim * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
-    error = cudaMemcpy(handle->H1, H1, dim * dim * amps * sizeof(complex_t), cudaMemcpyHostToDevice);
+
+    error = cudaMemcpy(handle->H1, H1, dim*dim*amps*sizeof(cuComplex), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
     // Helper Arrays
@@ -215,6 +241,92 @@ Parament_ErrorCode Parament_setHamiltonian(
     handle->Hnorm = OneNorm(H0,dim);
     handle->alpha = -handle->Hnorm;
     handle->beta = handle->Hnorm;
+    
+    if (use_magnus){
+        PARAMENT_DEBUG("Calculate Commutators");
+        cuComplex *currentH1Addr;
+        cuComplex *currentH2Addr;
+        cuComplex *currentCommAddr;
+
+        for (int i = 0;i<amps;++i){
+
+           
+            
+            currentH1Addr   = handle->H1 + i*dim*dim;
+            currentCommAddr = handle->H1 + (i+amps)*dim*dim;
+            //printf("%d\n",(i+amps)*dim*dim);
+            //PARAMENT_DEBUG("Hier kommt H1addr");
+            //readback(currentH1Addr,dim*dim);
+            //PARAMENT_DEBUG("Hier kommt handle->H0");
+            //readback(handle->H0,dim*dim);
+            
+            
+            // Commutators with H0
+            if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            dim, dim, dim,
+            &handle->one,
+            handle->H0, dim,
+            currentH1Addr, dim,
+            &handle->zero,
+            currentCommAddr, dim)){
+                handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
+                goto error_cleanup;
+            };
+
+            if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+            CUBLAS_OP_N, CUBLAS_OP_N,
+            dim, dim, dim,
+            &handle->mone,
+            currentH1Addr, dim,
+            handle->H0, dim,
+            &handle->one,
+            currentCommAddr, dim)){
+                handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
+                goto error_cleanup;
+            };
+
+
+            for (int j = 0;j<amps;++j){
+                if (j<i){
+                // Pairwise commutators
+                currentH1Addr   = handle->H1 + i*dim*dim;
+                currentH2Addr   = handle->H1 + j*dim*dim;
+                currentCommAddr = handle->H1 + (2*amps+(i-1)+j)*dim*dim;
+
+
+
+                if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                dim, dim, dim,
+                &handle->one,
+                currentH2Addr, dim,
+                currentH1Addr, dim,
+                &handle->zero,
+                currentCommAddr, dim)){
+                    handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
+                    goto error_cleanup;
+                };
+
+                if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                dim, dim, dim,
+                &handle->mone,
+                currentH1Addr, dim,
+                currentH2Addr, dim,
+                &handle->one,
+                currentCommAddr, dim)){
+                    handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
+                    goto error_cleanup;
+                };
+                }
+                
+            }
+        }
+    }
+        PARAMENT_DEBUG("Hier kommt H1 nach Trafo");
+        readback(handle->H1,H1memory/sizeof(cuComplex));
+
 
 
     // nvtxMarkA("Set Hamiltonian routine completed");
@@ -299,7 +411,7 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps) {
+static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, float dt) {
     unsigned int dim = handle->dim;
     cublasStatus_t error;
     error = cublasCgemm(handle->cublasHandle,
@@ -504,7 +616,7 @@ Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle,
         return handle->lastError;
     }
 
-    handle->lastError = equipropExpand(handle, pts, amps);
+    handle->lastError = equipropExpand(handle, pts, amps, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
     }
@@ -570,8 +682,8 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle) {
 }
 
 Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-        unsigned int dim, unsigned int amps) {
-    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps);
+        unsigned int dim, unsigned int amps, bool use_magnus) {
+    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus);
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,

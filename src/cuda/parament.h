@@ -116,7 +116,7 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle)
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps);
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps, bool use_magnus);
 
 /**
  * Compute the propagator from the Hamiltionian.

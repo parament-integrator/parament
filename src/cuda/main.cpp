@@ -46,7 +46,7 @@ int main(int argc, const char* argv[]) {
     Parament_ErrorCode error;
     error = Parament_create(&parament);
     assert(error == PARAMENT_STATUS_SUCCESS);
-    error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM, 1);
+    error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM, 1,false);
     assert(error == PARAMENT_STATUS_SUCCESS);
     
     cuComplex* outputmat = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
