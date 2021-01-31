@@ -5,6 +5,7 @@
 #include "diagonal_add.h"
 #include "mathhelper.h"
 #include "debugfuncs.h"
+#include "control_expansion.h"
 
 #define ENDLINE "\n"
 
@@ -49,6 +50,8 @@ Parament_ErrorCode Parament_create(struct Parament_Context<complex_t> **handle_p
     // initialize options
     handle->MMAX = 11;
     handle->MMAX_manual = false;
+    handle->quadrature_mode = Simpson;
+    handle->enable_magnus = true;
 
     // BESSEL COEFFICIENTS
     handle->alpha = -2.0;
@@ -175,26 +178,33 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) 
 
 template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
-        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps, bool use_magnus) {
+        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps, bool use_magnus, quadrature_spec quadrature_mode) {
     // Hamiltonian might have been set before, deallocate first
     freeHamiltonian(handle);
 
     handle->dim = dim;
 
-        if (use_magnus) {
+
+    if (use_magnus) {
         PARAMENT_DEBUG("Magnus enabled");
         handle->enable_magnus = true;
+        if (quadrature_mode != Simpson){
+            handle->lastError = PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION;
+            goto error_cleanup;  
+        }
+        handle->quadrature_mode = Simpson;
     }
     else
     {
         handle->enable_magnus = false;
+        handle->quadrature_mode = quadrature_mode;
     }
 
     int H1memory;
 
     if (use_magnus) {
         // amps*(amps-1)/2 pairwise commutators + amps commutators with H0 + amps "real control Hamiltonians"
-        H1memory = dim * dim * sizeof(cuComplex) * ( 2*amps + amps*(amps-1)/2 );
+        H1memory = dim * dim * sizeof(cuComplex) * ( 2*amps + (amps*(amps-1))/2 );
 
     }
     else
@@ -324,8 +334,8 @@ Parament_ErrorCode Parament_setHamiltonian(
             }
         }
     }
-        PARAMENT_DEBUG("Hier kommt H1 nach Trafo");
-        readback(handle->H1,H1memory/sizeof(cuComplex));
+        //PARAMENT_DEBUG("Hier kommt H1 nach Trafo");
+        //readback(handle->H1,H1memory/sizeof(cuComplex));
 
 
 
@@ -379,6 +389,7 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
 
         PARAMENT_DEBUG("Need to malloc arrays on GPU");
         unsigned int dim = handle-> dim;
+
         if (cudaSuccess != cudaMalloc(&handle->c0, pts * sizeof(complex_t))
                 || cudaSuccess != cudaMalloc(&handle->c1, pts * amps * sizeof(complex_t))
                 || cudaSuccess != cudaMalloc(&handle->X, dim * dim * pts * sizeof(complex_t))
@@ -388,6 +399,33 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
             return PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         }
 
+        // If magnus enabled, then get a c2 array of appropriate size encorpoarting the commutators
+        if (handle->enable_magnus == true) {
+                PARAMENT_DEBUG("Malloc c2 for Magnus");
+                if (cudaSuccess != cudaMalloc(&handle->c2, (pts-1)/2*(2*amps+(amps*(amps-1))/2) * sizeof(complex_t))) {
+                    freeWorkingMemory(handle);
+                    return PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
+                    } 
+        }
+       
+        // If quadrature enabled
+        if ((handle->quadrature_mode == Midpoint) && (handle->enable_magnus == false)) {
+            PARAMENT_DEBUG("Malloc c2 for Midpoint");
+            if (cudaSuccess != cudaMalloc(&handle->c2, (pts-1)*amps * sizeof(complex_t))) {
+                freeWorkingMemory(handle);
+                return PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
+                } 
+        }
+
+        if ((handle->quadrature_mode == Simpson) && (handle->enable_magnus == false)){
+            PARAMENT_DEBUG("Malloc c2 for Simpson");
+            if (cudaSuccess != cudaMalloc(&handle->c2, (pts-1)/2*amps * sizeof(complex_t))) {
+                freeWorkingMemory(handle);
+                return PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
+                } 
+        }
+
+    
         // Memorize how many pts are initalized
         handle->curr_max_pts = pts;
 
@@ -403,6 +441,8 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
         }
     }
 
+    
+
     // Transfer c1
     cudaError_t error = cudaMemcpy(handle->c1, carr, amps * pts * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
@@ -412,6 +452,7 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
 
 template<typename complex_t>
 static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, float dt) {
+
     unsigned int dim = handle->dim;
     cublasStatus_t error;
     error = cublasCgemm(handle->cublasHandle,
@@ -426,17 +467,90 @@ static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *han
         return PARAMENT_STATUS_CUBLAS_FAILED;
     }
 
+
+    // Midpoint, Simpson, Magnus
+
+    complex_t* expansion_array;
+    unsigned int expansion_pts;
+    unsigned int expansion_amps;
+
+    if ((handle->quadrature_mode == Just_propagate) && (handle->enable_magnus == false)){
+        expansion_array = handle->c1;
+        expansion_amps = amps;
+        expansion_pts = pts;
+    }
+
+    if ((handle->quadrature_mode == Midpoint) && (handle->enable_magnus == false)){
+        // Kernel launch for midpoint
+        //PARAMENT_DEBUG("Hier kommt das alte Array");
+        //readback(handle->c1,pts*amps);
+
+        control_midpoint(handle->c1,handle->c2,amps,pts,handle->numSMs);
+
+        //PARAMENT_DEBUG("Hier kommt das neue Array");
+        //readback(handle->c2,(pts-1)*amps);
+
+        
+        expansion_array = handle->c2;
+        expansion_amps = amps;
+        expansion_pts = pts-1;
+    }
+
+    if ((handle->quadrature_mode == Simpson) && (handle->enable_magnus == false)){
+        // Kernel launch for Simpson
+        // We need an odd number of coefficients
+        //PARAMENT_DEBUG("Hier kommt das alte Array");
+        //readback(handle->c1,pts*amps);
+
+        control_simpson(handle->c1,handle->c2,amps,pts,handle->numSMs);
+
+        //PARAMENT_DEBUG("Hier kommt das neue Array");
+        //readback(handle->c2,(pts-1)/2*amps);
+
+        
+        expansion_array = handle->c2;
+        expansion_amps = amps;
+        expansion_pts = (pts-1)/2;
+    }
+
+    if (handle->enable_magnus == true){
+        // Magnus coefficients
+        // We need an odd number of coefficients
+        //PARAMENT_DEBUG("Hier kommt das alte Array");
+        //printf("n=%d\n",pts);
+        //printf("amps=%d\n",amps);
+        
+        //readback(handle->c1,pts*amps);
+
+        control_magnus(handle->c1,handle->c2,amps,pts,dt, handle->numSMs);
+
+        expansion_array = handle->c2;
+        expansion_amps = 2*amps+((amps-1)*amps)/2;
+        expansion_pts = (pts-1)/2;
+
+        //PARAMENT_DEBUG("Hier kommt das neue Array");
+        //readback(handle->c2,expansion_pts*expansion_amps);
+
+
+    }
+
+    
+     
+
+
     error = cublasCgemm(handle->cublasHandle,
         CUBLAS_OP_N, CUBLAS_OP_T,
-        dim*dim, pts, amps,
+        dim*dim, expansion_pts, expansion_amps,
         &handle->one,
         handle->H1, dim*dim,
-        handle->c1, pts,
+        expansion_array, expansion_pts,
         &handle->one,
         handle->X, dim*dim);
     if (error != CUBLAS_STATUS_SUCCESS) {
         return PARAMENT_STATUS_CUBLAS_FAILED;
     }
+
+    
 
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -566,6 +680,7 @@ static Parament_ErrorCode equipropReduce(struct Parament_Context<complex_t> *han
     return PARAMENT_STATUS_SUCCESS;
 }
 
+
 int Parament_selectIterationCycles_fp32(float H_norm, float dt) {
     if (H_norm*dt <= 0.032516793) { return 3; };
     if (H_norm*dt <= 0.219062571) { return 5; };
@@ -605,6 +720,11 @@ Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle,
         handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
         return handle->lastError;
     }
+
+    if ((handle->enable_magnus == true) || (handle->quadrature_mode == Simpson)){
+        dt = 2*dt;
+    }
+
     handle->lastError = equipropComputeCoefficients(handle, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
@@ -662,6 +782,8 @@ const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
         return "Failed to execute cuBLAS function.";
     case PARAMENT_STATUS_SELECT_SMALLER_DT:
         return "Timestep too large";
+    case PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION:
+        return "Invalid quadrature selection";
     default:
         return "Unknown error code";
     }
@@ -682,8 +804,8 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle) {
 }
 
 Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-        unsigned int dim, unsigned int amps, bool use_magnus) {
-    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus);
+        unsigned int dim, unsigned int amps, bool use_magnus, quadrature_spec quadrature_mode) {
+    return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus, quadrature_mode);
 }
 
 Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,

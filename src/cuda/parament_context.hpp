@@ -9,6 +9,8 @@
 #include "parament.h"
 
 
+//typedef enum {Just_propagate, Midpoint, Simpson}quadrature_mode;
+
 template<typename complex_t> struct Parament_Context {
     // Handles
     cublasHandle_t cublasHandle;
@@ -31,6 +33,7 @@ template<typename complex_t> struct Parament_Context {
     // Point arrays
     complex_t *c0;
     complex_t *c1;
+    complex_t *c2;
     complex_t *X;
     complex_t *D0;
     complex_t *D1;
@@ -59,6 +62,7 @@ template<typename complex_t> struct Parament_Context {
 
     // Integration parameters
     bool enable_magnus;
+    quadrature_spec quadrature_mode;
 };
 
 #endif  // PARAMENT_CONTEXT_H_

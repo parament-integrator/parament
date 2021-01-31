@@ -20,6 +20,14 @@ extern "C" {
 
 struct Parament_Context_f32;
 
+typedef enum e_quadrature_spec
+{
+    Just_propagate = 0x00000000,
+    Midpoint       = 0X01000000,
+    Simpson        = 0X02000000
+} quadrature_spec;
+
+
 /**
  * Error codes returned by Parament.
  */
@@ -71,6 +79,13 @@ typedef enum Parament_ErrorCode {
     /**
      * Place holder for more error codes...
      */
+
+    /**
+     * Failed to perform automatic iteration cycles determination.
+     */
+    PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION = 90,
+
+
     PARAMENT_FAIL = 1000
     // ...
 } Parament_ErrorCode;
@@ -116,7 +131,7 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle)
  *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps, bool use_magnus);
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1, unsigned int dim, unsigned int amps, bool use_magnus, quadrature_spec quadrature_mode);
 
 /**
  * Compute the propagator from the Hamiltionian.

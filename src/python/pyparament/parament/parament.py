@@ -36,7 +36,7 @@ c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
-lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool]
+lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
 lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_float, ctypes.c_uint, ctypes.c_uint, c_cuComplex_p]
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
@@ -59,8 +59,16 @@ class Parament:
         if self._handle is not None:
             self.destroy()
     
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False):
+    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False,quadrature_mode='just propagate'):
         # todo: input validation...
+        if quadrature_mode == 'just propagate':
+            modesel = 0
+        elif quadrature_mode == 'midpoint':
+            modesel = 16777216 
+        elif quadrature_mode == 'simpson':
+            modesel = 33554432
+        else:
+            raise ValueError('unkonown quadrature mode selected')
         dim = np.shape(H0)
         dim = dim[0]
         amps = np.shape(H1)
@@ -75,7 +83,7 @@ class Parament:
             self._handle,
             np.complex64(np.asfortranarray(H0)),
             np.complex64(np.asfortranarray(H1)),
-            dim,amps,use_magnus
+            dim,amps,use_magnus,modesel
         ))
         logger.debug("Python setHamiltonian completed")
 
@@ -103,6 +111,7 @@ class Parament:
                 PARAMENT_STATUS_INVALID_VALUE: ValueError,
                 PARAMENT_STATUS_CUBLAS_FAILED: RuntimeError,
                 PARAMENT_STATUS_SELECT_SMALLER_DT: RuntimeError,
+                PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION: RuntimeError,
                 PARAMENT_FAIL: RuntimeError,
             }[error_code]
         except KeyError as e:
