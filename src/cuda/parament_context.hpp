@@ -62,7 +62,7 @@ template<typename complex_t> struct Parament_Context {
 
     // Integration parameters
     bool enable_magnus;
-    quadrature_spec quadrature_mode;
+    Parament_QuadratureSpec quadrature_mode;
 };
 
 #endif  // PARAMENT_CONTEXT_H_

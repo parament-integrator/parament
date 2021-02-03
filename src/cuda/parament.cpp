@@ -28,9 +28,9 @@
 
 
 template<typename complex_t>
-Parament_ErrorCode Parament_create(struct Parament_Context<complex_t> **handle_p) {
+Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
     // todo (Pol): use `new` operator instead of `malloc`. Casting `malloc` is BAD.
-    auto *handle = reinterpret_cast<Parament_Context<complex_t>*>(malloc(sizeof(struct Parament_Context<complex_t>)));
+    auto *handle = reinterpret_cast<Parament_Context<complex_t>*>(malloc(sizeof(Parament_Context<complex_t>)));
     *handle_p = handle;
     if (handle == NULL) {
         return PARAMENT_STATUS_HOST_ALLOC_FAILED;
@@ -106,7 +106,7 @@ error_cleanup1:
  * Frees a previously allocated hamiltionian. No-op if no hamiltonian has been allocated.
  */
 template<typename complex_t>
-static void freeHamiltonian(struct Parament_Context<complex_t> *handle) {
+static void freeHamiltonian(Parament_Context<complex_t> *handle) {
     cudaError_t error;
     PARAMENT_DEBUG("Freeing handle->H0 = 0x%p", handle->H0);
     error = cudaFree(handle->H0);
@@ -127,7 +127,7 @@ static void freeHamiltonian(struct Parament_Context<complex_t> *handle) {
  * Frees a previously allocated control field and working memory. No-op if no control field has been allocated.
  */
 template<typename complex_t>
-static void freeWorkingMemory(struct Parament_Context<complex_t> *handle) {
+static void freeWorkingMemory(Parament_Context<complex_t> *handle) {
     if (handle->curr_max_pts != 0) {
     cudaError_t error;
     PARAMENT_DEBUG("Freeing handle->c0: 0x%p", handle->c0);
@@ -155,7 +155,7 @@ static void freeWorkingMemory(struct Parament_Context<complex_t> *handle) {
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) {
+Parament_ErrorCode Parament_destroy(Parament_Context<complex_t> *handle) {
     cudaError_t cudaError;
     cudaError = cudaDeviceSynchronize();
     assert(cudaError == cudaSuccess);
@@ -178,7 +178,8 @@ Parament_ErrorCode Parament_destroy(struct Parament_Context<complex_t> *handle) 
 
 template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
-        struct Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps, bool use_magnus, quadrature_spec quadrature_mode) {
+        Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps,
+        bool use_magnus, Parament_QuadratureSpec quadrature_mode) {
     // Hamiltonian might have been set before, deallocate first
     freeHamiltonian(handle);
 
@@ -349,7 +350,7 @@ error_cleanup:
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context<complex_t> *handle, float dt) {
+static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t> *handle, float dt) {
     // If enabled, automatically determine number of iterations
     if (!handle->MMAX_manual){
         int MMAX_selected;
@@ -381,7 +382,7 @@ static Parament_ErrorCode equipropComputeCoefficients(struct Parament_Context<co
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *handle, complex_t *carr, unsigned int pts, unsigned int amps) {
+static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, complex_t *carr, unsigned int pts, unsigned int amps) {
     // Allocate memory for c arrays if needed
     if (handle->curr_max_pts < pts) {
         PARAMENT_DEBUG("Need to free arrays on GPU");
@@ -451,7 +452,7 @@ static Parament_ErrorCode equipropTransfer(struct Parament_Context<complex_t> *h
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, float dt) {
+static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, float dt) {
 
     unsigned int dim = handle->dim;
     cublasStatus_t error;
@@ -556,7 +557,7 @@ static Parament_ErrorCode equipropExpand(struct Parament_Context<complex_t> *han
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropPropagate(struct Parament_Context<complex_t> *handle, float dt, unsigned int pts) {
+static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle, float dt, unsigned int pts) {
     // define some short-form aliases...
     const unsigned int dim = handle->dim;
     complex_t *const D0 = handle->D0;
@@ -639,7 +640,7 @@ static Parament_ErrorCode equipropPropagate(struct Parament_Context<complex_t> *
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropReduce(struct Parament_Context<complex_t> *handle, unsigned int pts) {
+static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, unsigned int pts) {
     // define some short-form aliases...
     const unsigned int dim = handle->dim;
     complex_t *const D1 = handle->D1;
@@ -700,21 +701,21 @@ int Parament_selectIterationCycles_fp32(float H_norm, float dt) {
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context<complex_t> *handle, unsigned int cycles) {
+Parament_ErrorCode Parament_setIterationCyclesManually(Parament_Context<complex_t> *handle, unsigned int cycles) {
     handle->MMAX = cycles;
     handle->MMAX_manual = true;
     return PARAMENT_STATUS_SUCCESS;
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context<complex_t> *handle) {
+Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t> *handle) {
     handle->MMAX = 11;
     handle->MMAX_manual = false;
     return PARAMENT_STATUS_SUCCESS;
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle, complex_t *carr, float dt, unsigned int pts, unsigned int amps, complex_t *out) {
+Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, float dt, unsigned int pts, unsigned int amps, complex_t *out) {
     PARAMENT_DEBUG("Equiprop C called");
     if (handle->H0 == NULL) {
         handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
@@ -762,7 +763,7 @@ Parament_ErrorCode Parament_equiprop(struct Parament_Context<complex_t> *handle,
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context<complex_t> *handle) {
+Parament_ErrorCode Parament_peekAtLastError(Parament_Context<complex_t> *handle) {
     return handle->lastError;
 }
 
@@ -795,33 +796,33 @@ const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
 // Implementation of the actually exported (i.e. non-templated) functions
 // ======================================================================
 
-Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_p) {
+Parament_ErrorCode Parament_create(Parament_Context_f32 **handle_p) {
     return Parament_create<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>**>(handle_p));
 }
 
-Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle) {
+Parament_ErrorCode Parament_destroy(Parament_Context_f32 *handle) {
     return Parament_destroy<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle));
 }
 
-Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-        unsigned int dim, unsigned int amps, bool use_magnus, quadrature_spec quadrature_mode) {
+Parament_ErrorCode Parament_setHamiltonian(Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
+        unsigned int dim, unsigned int amps, char use_magnus, Parament_QuadratureSpec quadrature_mode) {
     return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus, quadrature_mode);
 }
 
-Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,
+Parament_ErrorCode Parament_equiprop(Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,
         unsigned int amps, cuComplex *out) {
     return Parament_equiprop<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), carr, dt, pts, amps, out);
 }
 
-Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context_f32 *handle, unsigned int cycles) {
+Parament_ErrorCode Parament_setIterationCyclesManually(Parament_Context_f32 *handle, unsigned int cycles) {
     return Parament_setIterationCyclesManually<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle),
         cycles);
 }
 
-Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context_f32 *handle) {
+Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context_f32 *handle) {
     return Parament_automaticIterationCycles<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle));
 }
 
-Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 *handle) {
+Parament_ErrorCode Parament_peekAtLastError(Parament_Context_f32 *handle) {
     return Parament_peekAtLastError<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle));
 }
