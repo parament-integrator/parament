@@ -1,3 +1,9 @@
+..
+    This document is not rendered in the HTML version.
+    Instead, we use a custom page (template).
+    See `html_additional_pages` in conf.py.
+
+
 
 Documentation of Parament
 =========================
