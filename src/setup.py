@@ -17,6 +17,7 @@ CUDA_SRC_FILES = (
     b"parament.cpp",
     b"printFuncs.c",
     b"debugfuncs.c",
+    b" control_expansion.cu",
 )
 NVCC_BIN = b"nvcc"
 NVCC_ARGS = (
