@@ -7,8 +7,14 @@ set outputDir=build
 md build
 cd src\cuda
 @echo on
-nvcc %nvccFlags% -DPARAMENT_LINK -o ..\..\%outputDir%\parament.exe %sourceFiles%
-nvcc %nvccFlags% -DPARAMENT_BUILD_DLL -o ..\..\%outputDir%\parament.dll --shared %sourceFiles%
+nvcc %nvccFlags% -DPARAMENT_LINK -o ..\..\%outputDir%\parament.exe %sourceFiles% || goto :error
+nvcc %nvccFlags% -DPARAMENT_BUILD_DLL -o ..\..\%outputDir%\parament.dll --shared %sourceFiles% || goto :error
 @echo off
 cd ..\..
 ENDLOCAL
+goto :EOF
+
+
+:error
+echo Failed with error #%errorlevel%.
+exit /b %errorlevel%
