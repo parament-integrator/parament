@@ -9,15 +9,17 @@
 #include "parament.h"
 
 
-struct Parament_Context {
+//typedef enum {Just_propagate, Midpoint, Simpson}quadrature_mode;
+
+template<typename complex_t> struct Parament_Context {
     // Handles
     cublasHandle_t cublasHandle;
 
     // GPU Arrays and constants
-    cuComplex *H0;
-    cuComplex *H1;
-    cuComplex *one_GPU;
-    cuComplex *one_GPU_diag;
+    complex_t *H0;
+    complex_t *H1;
+    complex_t *one_GPU;
+    complex_t *one_GPU_diag;
 
     // Dimension of the Hilbert space
     unsigned int dim;
@@ -29,14 +31,15 @@ struct Parament_Context {
     unsigned int curr_max_pts;
 
     // Point arrays
-    cuComplex *c0;
-    cuComplex *c1;
-    cuComplex *X;
-    cuComplex *D0;
-    cuComplex *D1;
+    complex_t *c0;
+    complex_t *c1;
+    complex_t *c2;
+    complex_t *X;
+    complex_t *D0;
+    complex_t *D1;
 
     // BESSEL COEFFICIENTS
-    cuComplex *J;
+    complex_t *J;
     float alpha;
     float beta;
 
@@ -47,14 +50,19 @@ struct Parament_Context {
 
     // Commonly used constants
     // (can't be actually const, because we compute the value by calling make_complex())
-    cuComplex zero;
-    cuComplex one;
-    cuComplex two;
-    cuComplex mone;
-    cuComplex mtwo;
+    complex_t zero;
+    complex_t one;
+    complex_t two;
+    complex_t mone;
+    complex_t mtwo;
 
     // Iteration cycle number
     unsigned int MMAX;
     bool MMAX_manual;
+
+    // Integration parameters
+    bool enable_magnus;
+    quadrature_spec quadrature_mode;
 };
+
 #endif  // PARAMENT_CONTEXT_H_

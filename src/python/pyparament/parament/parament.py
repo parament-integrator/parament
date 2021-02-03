@@ -29,10 +29,18 @@ class Parament:
     def __del__(self):
         if self._handle is not None:
             self.destroy()
-    
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray):
-        """Foo bar"""
+
+    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False,quadrature_mode='just propagate'):
+        """Foo bar. Add docs here"""
         # todo: input validation...
+        if quadrature_mode == 'just propagate':
+            modesel = 0
+        elif quadrature_mode == 'midpoint':
+            modesel = 0x1000000
+        elif quadrature_mode == 'simpson':
+            modesel = 0x2000000
+        else:
+            raise ValueError('unkonown quadrature mode selected')
         dim = np.shape(H0)
         dim = dim[0]
         amps = np.shape(H1)
@@ -47,7 +55,7 @@ class Parament:
             self._handle,
             np.complex64(np.asfortranarray(H0)),
             np.complex64(np.asfortranarray(H1)),
-            dim,amps,
+            dim,amps,use_magnus,modesel
         ))
         logger.debug("Python setHamiltonian completed")
 
@@ -65,8 +73,8 @@ class Parament:
             code = self._lib.Parament_getLastError(self._handle)
         return self._lib.Parament_errorMessage(code).decode()
 
-    def _checkError(self, errorCode):
-        if errorCode == PARAMENT_STATUS_SUCCESS:
+    def _checkError(self, error_code):
+        if error_code == PARAMENT_STATUS_SUCCESS:
             return
         try:
             exceptionClass = {
@@ -76,10 +84,11 @@ class Parament:
                 PARAMENT_STATUS_INVALID_VALUE: ValueError,
                 PARAMENT_STATUS_CUBLAS_FAILED: RuntimeError,
                 PARAMENT_STATUS_SELECT_SMALLER_DT: RuntimeError,
+                PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION: RuntimeError,
                 PARAMENT_FAIL: RuntimeError,
-            }[errorCode]
+            }[error_code]
         except KeyError as e:
             raise AssertionError('Unknown error code ') from e
 
-        message = self._getErrorMessage(errorCode)
-        raise exceptionClass(f"Error code {errorCode}: {message}")
+        message = self._getErrorMessage(error_code)
+        raise exceptionClass(f"Error code {error_code}: {message}")
