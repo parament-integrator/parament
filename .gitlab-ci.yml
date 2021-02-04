@@ -45,3 +45,5 @@ runTestPyparament:win:
     reports:
       junit: report_test.xml
       cobertura: coverage.xml
+    paths:
+      - numerics.log
