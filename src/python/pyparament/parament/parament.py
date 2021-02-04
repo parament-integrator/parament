@@ -55,7 +55,7 @@ class Parament:
             self._handle,
             np.complex64(np.asfortranarray(H0)),
             np.complex64(np.asfortranarray(H1)),
-            dim,amps,use_magnus,modesel
+            dim, amps, use_magnus, modesel
         ))
         logger.debug("Python setHamiltonian completed")
 
