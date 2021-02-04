@@ -43,4 +43,5 @@ runTestPyparament:win:
     - buildPyparament:win
   artifacts:
     reports:
-      junit: report.xml
+      junit: report_test.xml
+      cobertura: coverage.xml
