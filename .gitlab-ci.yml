@@ -44,3 +44,5 @@ runTestPyparament:win:
   artifacts:
     reports:
       junit: report.xml
+    paths:
+      - numerics.log
