@@ -44,7 +44,7 @@ runTestPyparament:win:
     - buildPyparament:win
 
 metrics_job:
-  script
+  script:
     - echo "metric_test 123" > metrics.txt
   artifacts:
     reports:
