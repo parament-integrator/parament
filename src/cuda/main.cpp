@@ -47,7 +47,7 @@ int main(int argc, const char* argv[]) {
     error = Parament_create(&parament);
     assert(error == PARAMENT_STATUS_SUCCESS);
     Parament_QuadratureSpec quadrature_mode;
-    quadrature_mode = Just_propagate;
+    quadrature_mode = PARAMENT_QUADRATURE_NONE;
     error = Parament_setHamiltonian(parament, hostH0, hostH1, TEST_DIM, 1,false,quadrature_mode);
     assert(error == PARAMENT_STATUS_SUCCESS);
     

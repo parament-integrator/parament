@@ -2,7 +2,7 @@ import logging
 import ctypes
 import numpy as np
 
-from .errorcodes import *
+from .constants import *
 
 import parament.paramentlib
 
@@ -30,7 +30,7 @@ class Parament:
         if self._handle is not None:
             self.destroy()
 
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False,quadrature_mode='just propagate'):
+    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False, quadrature_mode='just propagate'):
         """Foo bar. Add docs here"""
         # todo: input validation...
         if quadrature_mode == 'just propagate':
@@ -84,7 +84,8 @@ class Parament:
                 PARAMENT_STATUS_INVALID_VALUE: ValueError,
                 PARAMENT_STATUS_CUBLAS_FAILED: RuntimeError,
                 PARAMENT_STATUS_SELECT_SMALLER_DT: RuntimeError,
-                PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION: RuntimeError,
+                PARAMENT_STATUS_NO_HAMILTONIAN: RuntimeError,
+                PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION: ValueError,
                 PARAMENT_FAIL: RuntimeError,
             }[error_code]
         except KeyError as e:

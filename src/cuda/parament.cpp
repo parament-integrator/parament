@@ -50,7 +50,7 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
     // initialize options
     handle->MMAX = 11;
     handle->MMAX_manual = false;
-    handle->quadrature_mode = Simpson;
+    handle->quadrature_mode = PARAMENT_QUADRATURE_SIMPSON;
     handle->enable_magnus = true;
 
     // BESSEL COEFFICIENTS
@@ -185,15 +185,14 @@ Parament_ErrorCode Parament_setHamiltonian(
 
     handle->dim = dim;
 
-
     if (use_magnus) {
         PARAMENT_DEBUG("Magnus enabled");
         handle->enable_magnus = true;
-        if (quadrature_mode != Simpson){
+        if (quadrature_mode != PARAMENT_QUADRATURE_SIMPSON){
             handle->lastError = PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION;
             goto error_cleanup;  
         }
-        handle->quadrature_mode = Simpson;
+        handle->quadrature_mode = PARAMENT_QUADRATURE_SIMPSON;
     }
     else
     {
@@ -410,7 +409,7 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
         }
        
         // If quadrature enabled
-        if ((handle->quadrature_mode == Midpoint) && (handle->enable_magnus == false)) {
+        if ((handle->quadrature_mode == PARAMENT_QUADRATURE_MIDPOINT) && (handle->enable_magnus == false)) {
             PARAMENT_DEBUG("Malloc c2 for Midpoint");
             if (cudaSuccess != cudaMalloc(&handle->c2, (pts-1)*amps * sizeof(complex_t))) {
                 freeWorkingMemory(handle);
@@ -418,7 +417,7 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
                 } 
         }
 
-        if ((handle->quadrature_mode == Simpson) && (handle->enable_magnus == false)){
+        if ((handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON) && (handle->enable_magnus == false)){
             PARAMENT_DEBUG("Malloc c2 for Simpson");
             if (cudaSuccess != cudaMalloc(&handle->c2, (pts-1)/2*amps * sizeof(complex_t))) {
                 freeWorkingMemory(handle);
@@ -475,13 +474,13 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
     unsigned int expansion_pts;
     unsigned int expansion_amps;
 
-    if ((handle->quadrature_mode == Just_propagate) && (handle->enable_magnus == false)){
+    if ((handle->quadrature_mode == PARAMENT_QUADRATURE_NONE) && (handle->enable_magnus == false)){
         expansion_array = handle->c1;
         expansion_amps = amps;
         expansion_pts = pts;
     }
 
-    if ((handle->quadrature_mode == Midpoint) && (handle->enable_magnus == false)){
+    if ((handle->quadrature_mode == PARAMENT_QUADRATURE_MIDPOINT) && (handle->enable_magnus == false)){
         // Kernel launch for midpoint
         //PARAMENT_DEBUG("Hier kommt das alte Array");
         //readback(handle->c1,pts*amps);
@@ -497,7 +496,7 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
         expansion_pts = pts-1;
     }
 
-    if ((handle->quadrature_mode == Simpson) && (handle->enable_magnus == false)){
+    if ((handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON) && (handle->enable_magnus == false)){
         // Kernel launch for Simpson
         // We need an odd number of coefficients
         //PARAMENT_DEBUG("Hier kommt das alte Array");
@@ -722,7 +721,7 @@ Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, comple
         return handle->lastError;
     }
 
-    if ((handle->enable_magnus == true) || (handle->quadrature_mode == Simpson)){
+    if ((handle->enable_magnus == true) || (handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON)){
         dt = 2*dt;
     }
 
@@ -805,7 +804,7 @@ Parament_ErrorCode Parament_destroy(Parament_Context_f32 *handle) {
 }
 
 Parament_ErrorCode Parament_setHamiltonian(Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-        unsigned int dim, unsigned int amps, char use_magnus, Parament_QuadratureSpec quadrature_mode) {
+        unsigned int dim, unsigned int amps, bool use_magnus, Parament_QuadratureSpec quadrature_mode) {
     return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus, quadrature_mode);
 }
 

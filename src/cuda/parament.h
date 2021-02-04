@@ -3,6 +3,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include<stdbool.h>
 #endif
 
 #ifdef PARAMENT_BUILD_DLL
@@ -20,13 +22,15 @@ extern "C" {
 
 struct Parament_Context_f32;
 
+/**
+ * Quadrature rule used by :c:func:`Parament_setHamiltonian`.
+ */
 typedef enum Parament_QuadratureSpec
 {
-    Just_propagate = 0x00000000,
-    Midpoint       = 0x01000000,
-    Simpson        = 0x02000000
+    PARAMENT_QUADRATURE_NONE = 0x00000000,  /**<No quadrature rule.*/
+    PARAMENT_QUADRATURE_MIDPOINT = 0x01000000,  /**<Apply midpoint rule.*/
+    PARAMENT_QUADRATURE_SIMPSON = 0x02000000  /**<Apply Simpson's rule.*/
 } Parament_QuadratureSpec;
-
 
 /**
  * Error codes returned by Parament.
@@ -76,16 +80,15 @@ typedef enum Parament_ErrorCode {
      * :c:func:`Parament_setHamiltonian`.
      */
     PARAMENT_STATUS_NO_HAMILTONIAN = 80,
-    /**
-     * Place holder for more error codes...
-     */
 
     /**
      * Failed to perform automatic iteration cycles determination.
      */
     PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION = 90,
 
-
+    /**
+     * Place holder for more error codes...
+     */
     PARAMENT_FAIL = 1000
     // ...
 } Parament_ErrorCode;
@@ -95,13 +98,19 @@ typedef enum Parament_ErrorCode {
  * 
  * The context must eventually be destroyed by calling :c:func:`Parament_destroy`.
  *
- * :param handle_p: The new context.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *   - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when an underlying call to :c:func:`malloc()` failed.
- *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_INIT_FAILED` when Parament fails to initialize a cuBLAS context.
- *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
- *   - :c:enumerator:`PARAMENT_FAIL` when an unknown error occurred.
+ * Parameters
+ * ----------
+ * handle_p:
+ *     The new context.
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *     - :c:enumerator:`PARAMENT_STATUS_HOST_ALLOC_FAILED` when an underlying call to :c:func:`malloc()` failed.
+ *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_INIT_FAILED` when Parament fails to initialize a cuBLAS context.
+ *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
+ *     - :c:enumerator:`PARAMENT_FAIL` when an unknown error occurred.
  */
 LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_p);
 
@@ -111,94 +120,162 @@ LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_
  * If the provided handle is `NULL`, this function does nothing.
  * Using a context after it has been destroyed results in undefined behaviour.
  *
- * :param handle: The context to destroy.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ * Parameters
+ * ----------
+ * handle
+ *     The context to destroy.
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
 LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle);
 
 /**
  * Load a Hamiltonian.
- * 
- * :param handle: Handle to the Parament context.
- * :param H0: Drift Hamiltionian. Must be `dim` x `dim` array.
- * :param H1: Interaction Hamiltonian. Must be `dim` x `dim` array.
- * :param dim: Dimension of the Hamiltonians.
- * :param amps: number of the control amplitudes
- * 
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
- *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
+ *
+ * Parameters
+ * ----------
+ * handle
+ *     Handle to the Parament context.
+ * H0
+ *     Drift Hamiltionian. Must be `dim` x `dim` array.
+ * H1
+ *     Interaction Hamiltonians. Must be `dim` x `dim` x `amps` array.
+ * dim
+ *     Dimension of the Hamiltonians.
+ * amps
+ *     Number of the control amplitudes.
+ * use_magnus
+ *     Enable or disable the 1st order Magnus expansion. When ``true``, pass
+ *     :c:enumerator:`PARAMENT_QUADRATURE_SIMPSON` as `quadrature_mode`.
+ * quadrature_mode
+ *     The quadrature rule used for interpolating the control amplitudes.
+ *
+ *       - :c:enumerator:`PARAMENT_QUADRATURE_NONE`
+ *       - :c:enumerator:`PARAMENT_QUADRATURE_MIDPOINT`
+ *       - :c:enumerator:`PARAMENT_QUADRATURE_SIMPSON`
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
+ *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
+ *     - :c:enumerator:`PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION` when passing `use_magnus=True` without also
+ *       passing :c:enumerator:`PARAMENT_QUADRATURE_SIMPSON` as `quadrature_mode`.
  */
 LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
-unsigned int dim, unsigned int amps, char use_magnus, enum Parament_QuadratureSpec quadrature_mode);
+    unsigned int dim, unsigned int amps, bool use_magnus, enum Parament_QuadratureSpec quadrature_mode);
 
 /**
- * Compute the propagator from the Hamiltionian.
- * 
- * :param context: Handle to the Parament context.
- * :param carr: Array of the control field amplitudes.
- * :param dt: Time step.
- * :param pts: Number of entries per single control vector in `carr`.
- * :param amps: Number of control Hamiltonians
- * :param out: The returned propagator.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *   - :c:enumerator:`PARAMENT_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see :c:func:`Parament_setHamiltonian`).
- *   - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
- *   - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
- *   - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
+ * Compute the propagator from the Hamiltionians.
+ *
+ * Parameters
+ * ----------
+ * context
+ *     Handle to the Parament context.
+ * carr
+ *     Array of the control field amplitudes.
+ * dt
+ *     Time step.
+ * pts
+ *     Number of entries per single control vector in `carr`.
+ * amps
+ *     Number of control Hamiltonians
+ * out
+ *     The returned propagator.
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *     - :c:enumerator:`PARAMENT_STATUS_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see :c:func:`Parament_setHamiltonian`).
+ *     - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
+ *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
+ *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
-LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
+ LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
 
 
 /**
- * Get the number of Chebychev cycles for the given Hamiltonian and the given evolution time that are necessary to reach machine precision.
- * 
- * Returns -1 if the product of norm and dt is too large, and convergence cannot be guaranteed within a reasonable iteration count.
- *  
- * :param H_norm: Operator norm.
- * :param dt: Time step.
- * :param out: Number of iteration cycles.
+ * Get the number of Chebychev cycles necessary for reaching machine precision.
+ *
+ * The iteration count depends on the the given Hamiltonian and the given evolution time.
+ *
+ * Parameters
+ * ----------
+ * H_norm
+ *     Operator norm of the Hamiltonian.
+ * dt
+ *     Time step.
+ * Returns
+ * -------
+ * int
+ *     The required iteration count. Returns -1 if the product of norm and dt is too large, and convergence cannot be
+ *     guaranteed within a reasonable iteration count.
  */
 LIBSPEC int Parament_selectIterationCycles_fp32(float H_norm, float dt);
 
 /**
  * Manually enforce the number of iteration cycles used for the Chebychev approximation.
- *  
- * :param handle: Handle to the Parament context.
- * :param cycles: Number of iteration cycles.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *
+ * Parameters
+ * ----------
+ * handle
+ *     Handle to the Parament context.
+ * cycles
+ *     Number of iteration cycles.
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  * 
- * .. seealso::
- *      - :c:func:`Parament_automaticIterationCycles` to restore the default behaviour.
- * 
+ * See Also
+ * --------
+ * :c:func:`Parament_automaticIterationCycles` : Restore the default behaviour.
  */
 LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context_f32 *handle, unsigned int cycles);
 
 /**
  * Reenable the automatic choice of the number of iteration cycles used for the Chebychev approximation.
  *  
- * :param handle: Handle to the Parament context.
- * :return: 
- *   - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ * Parameters
+ * ----------
+ * handle
+ *     Handle to the Parament context.
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
  */
 LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context_f32 *handle);
 
 /**
  * Query the last error code.
  * 
- * :param handle: Handle to the Parament context.
- * :return: The error code returned by the last Parament call. :c:func:`Parament_peekAtLastError` itself does not overwrite the error code.
+ * Parameters
+ * ----------
+ * handle
+ *     Handle to the Parament context.
+ *
+ * Returns
+ * -------
+ * :c:enum:`Parament_ErrorCode`
+ *     The error code returned by the last Parament call. :c:func:`Parament_peekAtLastError` itself does not overwrite
+ *     the error code.
  */
 LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 *handle);
 
 /**
  * Get human readable message from error code.
- * 
- * :param errorCode: Error code for which to retrieve a message.
+ *
+ * Parameters
+ * ----------
+ * errorCode
+ *     Error code for which to retrieve a message.
  */
 LIBSPEC const char *Parament_errorMessage(Parament_ErrorCode errorCode);
 
