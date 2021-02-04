@@ -580,7 +580,7 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
         else {
             // D0 = D0 + 2 X @ D1 * dt
             error = cublasCgemmStridedBatched(handle->cublasHandle,
-                CUBLAS_OP_N, CUBLAS_OP_T,
+                CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
                 &dt_complex,
                 X, dim, dim*dim,
@@ -612,7 +612,7 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
 
         // D1 = D1 + 2 X @ D0
         error = cublasCgemmStridedBatched(handle->cublasHandle,
-            CUBLAS_OP_N, CUBLAS_OP_T,
+            CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
             &dt_complex,
             X, dim, dim*dim,
