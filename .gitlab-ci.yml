@@ -42,3 +42,10 @@ runTestPyparament:win:
     - "&tools\\runTestPyparament.bat"
   dependencies:
     - buildPyparament:win
+
+metrics_job:
+  script
+    - echo "metric_test 123" > metrics.txt
+  artifacts:
+    reports:
+      metrics: metrics.txt
