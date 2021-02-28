@@ -600,7 +600,7 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
         // D0 = D0 + I*ak
         assert(cudaPeekAtLastError() == cudaSuccess);
         diagonal_add(handle->J[k], D0, pts, handle->numSMs, handle->dim);
-        cudaDeviceSynchronize();
+        //cudaDeviceSynchronize();
         assert(cudaPeekAtLastError() == cudaSuccess);
 
         // Next step
@@ -631,7 +631,7 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
        // D1 = D1 + I*ak'
        assert(cudaPeekAtLastError() == cudaSuccess);
        diagonal_add(handle->J[k], D1, pts, handle->numSMs, handle->dim);
-       cudaDeviceSynchronize();
+       //cudaDeviceSynchronize();
        assert(cudaPeekAtLastError() == cudaSuccess);
 
        if (k == handle->MMAX - 1){
