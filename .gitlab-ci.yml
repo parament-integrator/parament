@@ -19,6 +19,8 @@ buildCuda:linux:
     paths:
       - build/parament
       - build/libparament.so
+  tags:
+    - linux
 
 buildDocs:
   stage: build
