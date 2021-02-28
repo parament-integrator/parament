@@ -13,10 +13,10 @@ CUDA_SRC_DIR = SRC_DIR / 'cuda'
 CUDA_SRC_FILES = (
     b"deviceinfo.c",
     b"diagonal_add.cu",
-    b"mathhelper.c",
+    b"mathhelper.cpp",
     b"parament.cpp",
-    b"printFuncs.c",
-    b"debugfuncs.c",
+    b"printFuncs.cpp",
+    b"debugfuncs.cpp",
     b" control_expansion.cu",
 )
 NVCC_BIN = b"nvcc"
