@@ -37,6 +37,17 @@ def run_nvcc(outputArgs):
         raise RuntimeError("Failed to build CUDA code") from e
 
 
+def run_nvcc_linux(outputArgs):
+    try:
+        nvcc_cmd = [NVCC_BIN, *NVCC_ARGS, *outputArgs, *CUDA_SRC_FILES]
+        print(b" ".join(nvcc_cmd).decode())
+        import shlex
+        linux_command = b" ".join(nvcc_cmd).decode()
+        subprocess.call(shlex.split(linux_command), shell=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError("Failed to build CUDA code") from e
+
+
 def build_parament_cuda(buildDir: pathlib.Path):
     cwd = os.getcwd()
     buildDir = buildDir.absolute()  # make path absolute, we are about to change the cwd
@@ -49,8 +60,12 @@ def build_parament_cuda(buildDir: pathlib.Path):
             # remove EXP and LIB files, keep only DLL
             os.remove(str(buildDir / "parament.exp"))
             os.remove(str(buildDir / "parament.lib"))
+        elif platform.system() == "Linux":
+            outputArgs = [b"-o", str(buildDir / "parament.so").encode()]
+            run_nvcc_linux(outputArgs)
+            print(buildDir)
         else:
-            raise RuntimeError("Don't know how to build on Linux...")
+            raise RuntimeError(f"Don't know how to build on {platform.system()}...")
     finally:
         os.chdir(cwd)  # restore original working directory
 
