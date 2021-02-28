@@ -11,6 +11,15 @@ buildCuda:win:
       - build/parament.exe
       - build/parament.dll
 
+buildCuda:linux:
+  stage: build
+  script:
+    - "&tools/build.sh"
+  artifacts:
+    paths:
+      - build/parament
+      - build/libparament.so
+
 buildDocs:
   stage: build
   script:
