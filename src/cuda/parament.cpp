@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <assert.h>
 #include "parament_context.hpp"
 #include "diagonal_add.h"
@@ -67,6 +68,9 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
     handle->mone = makeComplex<complex_t>(-1,0);
     handle->mtwo = makeComplex<complex_t>(-2,0);
 
+    cudaError_t error = cudaSuccess;
+    cublasStatus_t cublasError = CUBLAS_STATUS_SUCCESS;
+
     // initialize cublas context
     if (CUBLAS_STATUS_SUCCESS != cublasCreate(&(handle->cublasHandle))) {
         handle->lastError = PARAMENT_STATUS_CUBLAS_INIT_FAILED;
@@ -78,7 +82,7 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup2;
     }
-    cudaError_t error;
+    
     error = cudaMemcpy(handle->one_GPU, &handle->one, sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
@@ -97,7 +101,7 @@ error_cleanup3:
     error = cudaFree(handle->one_GPU);
     assert(error == cudaSuccess);
 error_cleanup2:
-    cublasStatus_t cublasError = cublasDestroy(handle->cublasHandle);
+    cublasError = cublasDestroy(handle->cublasHandle);
     assert(cublasError == CUBLAS_STATUS_SUCCESS);
 error_cleanup1:
     free(handle);

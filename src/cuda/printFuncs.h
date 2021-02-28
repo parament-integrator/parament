@@ -15,4 +15,5 @@ limitations under the License.
 
 #include <cublas_v2.h>
 
-void printcomplex(cuComplex* data, int len);
+template<typename complex_t>
+void printcomplex(complex_t* data, int len);

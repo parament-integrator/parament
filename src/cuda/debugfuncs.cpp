@@ -1,5 +1,6 @@
 #include <cublas_v2.h>
 #include <stdlib.h>
+#include <iostream>
 
 #define NO_CUDA_STUBS
 

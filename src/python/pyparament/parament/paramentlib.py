@@ -20,8 +20,19 @@ if os.name == "nt":
     except TypeError:
         # the winmode argument has been introduced in Python 3.8
         lib = ctypes.CDLL(lib_path)
+
+elif os.name == "posix":
+    if PARAMENT_LIB_DIR:
+        lib_path = str(pathlib.Path(PARAMENT_LIB_DIR) / 'libparament.so')
+    elif not USE_SHARED_PARAMENT:
+        lib_path = os.path.dirname(__file__) + '/libparament.so'
+    else:
+        lib_path = 'libparament.so'  # just search the system path
+
+    lib = ctypes.cdll.LoadLibrary(lib_path)
+
 else:
-    raise RuntimeError("Don't know how to load library on Linux")
+    raise RuntimeError("Don't know how to load library on " + os.name)
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)

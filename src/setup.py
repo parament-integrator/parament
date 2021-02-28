@@ -11,7 +11,7 @@ SRC_DIR = pathlib.Path(__file__).parent
 CUDA_SRC_DIR = SRC_DIR / 'cuda'
 
 CUDA_SRC_FILES = (
-    b"deviceinfo.c",
+    b"deviceInfo.c",
     b"diagonal_add.cu",
     b"mathhelper.cpp",
     b"parament.cpp",
@@ -20,12 +20,13 @@ CUDA_SRC_FILES = (
     b" control_expansion.cu",
 )
 NVCC_BIN = b"nvcc"
-NVCC_ARGS = (
+NVCC_ARGS =[ 
     b"-lcublas",
     b"-DPARAMENT_BUILD_DLL",
     b"-DNDEBUG",  # disable assertions and debug messages
     b"--shared",
-)
+]
+
 
 
 def run_nvcc(outputArgs):
@@ -39,16 +40,17 @@ def run_nvcc(outputArgs):
 
 def run_nvcc_linux(outputArgs):
     try:
+        NVCC_ARGS.append(b"--compiler-options -fPIC") # g++
         nvcc_cmd = [NVCC_BIN, *NVCC_ARGS, *outputArgs, *CUDA_SRC_FILES]
         print(b" ".join(nvcc_cmd).decode())
-        import shlex
         linux_command = b" ".join(nvcc_cmd).decode()
-        subprocess.call(shlex.split(linux_command), shell=True)
+        subprocess.run(linux_command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError("Failed to build CUDA code") from e
 
 
 def build_parament_cuda(buildDir: pathlib.Path):
+    #
     cwd = os.getcwd()
     buildDir = buildDir.absolute()  # make path absolute, we are about to change the cwd
     try:
@@ -61,11 +63,13 @@ def build_parament_cuda(buildDir: pathlib.Path):
             os.remove(str(buildDir / "parament.exp"))
             os.remove(str(buildDir / "parament.lib"))
         elif platform.system() == "Linux":
-            outputArgs = [b"-o", str(buildDir / "parament.so").encode()]
+            os.path.dirname(CUDA_SRC_DIR)
+            #raise Exception(os.listdir())
+            outputArgs = [b"-o", str(buildDir / "libparament.so").encode()]
             run_nvcc_linux(outputArgs)
             print(buildDir)
         else:
-            raise RuntimeError(f"Don't know how to build on {platform.system()}...")
+            raise RuntimeError("Don't know how to build on " + platform.system())
     finally:
         os.chdir(cwd)  # restore original working directory
 

@@ -8,11 +8,29 @@ extern "C" {
 #endif
 
 #ifdef PARAMENT_BUILD_DLL
+#if defined(_MSC_VER)
+    // Microsoft
     #define LIBSPEC __declspec(dllexport)
+#elif defined(__GNUC__)
+    // GCC 
+    #define LIBSPEC __attribute__((visibility("default")))
+#else
+    // do nothing and hope for the best?
+    #define LIBSPEC
+#endif
 #elif defined(PARAMENT_LINK)
     #define LIBSPEC
 #else
-    #define LIBSPEC __declspec(dllimport)
+#if defined(_MSC_VER)
+    // Microsoft
+    #define LIBSPEC __declspec(dllexport)
+#elif defined(__GNUC__)
+    // GCC 
+    #define LIBSPEC __attribute__((visibility("default")))
+#else
+    // do nothing and hope for the best?
+    #define LIBSPEC
+#endif
 #endif
 
 #ifndef NO_CUDA_STUBS

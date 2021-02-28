@@ -15,8 +15,19 @@ limitations under the License.
 #include <cuda_runtime_api.h>
 #include <stdio.h>
 
+#if defined(_MSC_VER)
+    // Microsoft
+    #define LIBSPEC __declspec(dllexport)
+#elif defined(__GNUC__)
+    // GCC 
+    #define LIBSPEC __attribute__((visibility("default")))
+#else
+    // do nothing and hope for the best?
+    #define LIBSPEC
+#endif
+
 // Displays the available GPUs in stdout
-__declspec(dllexport) void device_info(void) {
+LIBSPEC void device_info(void) {
     int nDevices;
     cudaError_t error;
     error = cudaGetDeviceCount(&nDevices);

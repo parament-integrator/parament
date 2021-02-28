@@ -13,6 +13,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include "printFuncs.h"
+#include <iostream>
 
 template<typename complex_t>
 void printcomplex(complex_t* data, int len) {
