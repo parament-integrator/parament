@@ -14,8 +14,8 @@ limitations under the License.
 
 #include "printFuncs.h"
 
-
-void printcomplex(cuComplex* data, int len) {
+template<typename complex_t>
+void printcomplex(complex_t* data, int len) {
     int j = 0;
     for (j = 0; j < len; j++) {
         printf("(%5.3f,%5.3fi) ", data[j].x, data[j].y);

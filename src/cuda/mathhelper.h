@@ -15,6 +15,16 @@ limitations under the License.
 
 #include <cublas_v2.h>
 
+// Build complex datatypes for GPU
+template <class complex_t>
+complex_t makeComplex(double a, double b);
+
+template <class complex_t>
+complex_t calculate_bessel_coeffs(int k, double x);
+
+double OneNorm(cuDoubleComplex* arr, unsigned int dim);
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,8 +43,8 @@ cuComplex imag_power(int k);
 // Returns the Bessel function array as cuComplex type
 void J_arr(cuComplex* arr, int mmax, double c);
 
-LIBSPEC float OneNorm(cuComplex* arr, unsigned int dim);
-
+LIBSPEC double OneNorm(cuComplex* arr, unsigned int dim);
+LIBSPEC double OneNorm_fp64(cuDoubleComplex* arr, unsigned int dim);
 
 #ifdef __cplusplus
 }

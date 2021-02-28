@@ -1,6 +1,3 @@
-
-
-
 // GEMM Stided batched
 cublasStatus_t cublasGgemmStridedBatched(cublasHandle_t handle,
                                   cublasOperation_t transa,

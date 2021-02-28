@@ -21,6 +21,8 @@ extern "C" {
 #endif  // NO_CUDA_STUBS
 
 struct Parament_Context_f32;
+struct Parament_Context_f64;
+
 
 /**
  * Quadrature rule used by :c:func:`Parament_setHamiltonian`.
@@ -195,7 +197,7 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  */
- LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts, unsigned int amps, cuComplex *out);
+ LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, double dt, unsigned int pts, unsigned int amps, cuComplex *out);
 
 
 /**
@@ -215,7 +217,7 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  *     The required iteration count. Returns -1 if the product of norm and dt is too large, and convergence cannot be
  *     guaranteed within a reasonable iteration count.
  */
-LIBSPEC int Parament_selectIterationCycles_fp32(float H_norm, float dt);
+LIBSPEC int Parament_selectIterationCycles_fp32(double H_norm, double dt);
 
 /**
  * Manually enforce the number of iteration cycles used for the Chebychev approximation.
@@ -278,6 +280,28 @@ LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 
  *     Error code for which to retrieve a message.
  */
 LIBSPEC const char *Parament_errorMessage(Parament_ErrorCode errorCode);
+
+
+LIBSPEC Parament_ErrorCode Parament_create_fp64(Parament_Context_f64 **handle_p);
+
+
+LIBSPEC Parament_ErrorCode Parament_destroy_fp64(Parament_Context_f64 *handle);
+
+
+LIBSPEC Parament_ErrorCode Parament_setHamiltonian_fp64(Parament_Context_f64 *handle, cuDoubleComplex *H0, cuDoubleComplex *H1,
+        unsigned int dim, unsigned int amps, bool use_magnus, Parament_QuadratureSpec quadrature_mode);
+
+LIBSPEC Parament_ErrorCode Parament_equiprop_fp64(Parament_Context_f64 *handle, cuDoubleComplex *carr, double dt, unsigned int pts,
+        unsigned int amps, cuDoubleComplex *out);
+
+LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually_fp64(Parament_Context_f64 *handle, unsigned int cycles);
+
+LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles_fp64(Parament_Context_f64 *handle);
+
+LIBSPEC Parament_ErrorCode Parament_peekAtLastError_fp64(Parament_Context_f64 *handle);
+
+LIBSPEC int Parament_selectIterationCycles_fp64(double H_norm, double dt);
+
 
 #ifdef __cplusplus
 }

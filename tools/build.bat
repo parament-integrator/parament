@@ -1,6 +1,6 @@
 @echo off
 SETLOCAL
-set sourceFiles=deviceinfo.c diagonal_add.cu main.cpp mathhelper.c parament.cpp printFuncs.c debugfuncs.c control_expansion.cu
+set sourceFiles=deviceinfo.c diagonal_add.cu main.cpp mathhelper.cpp parament.cpp printFuncs.cpp debugfuncs.cpp control_expansion.cu
 set nvccFlags=-lcublas
 set outputDir=build
 

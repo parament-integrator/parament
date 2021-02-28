@@ -6,6 +6,7 @@
 #include "mathhelper.h"
 #include "debugfuncs.h"
 #include "control_expansion.h"
+#include "parament_blas.hpp"
 
 #define ENDLINE "\n"
 
@@ -25,6 +26,8 @@
     #define PARAMENT_DEBUG(...) ((void)0)
     #define PARAMENT_ERROR(...) ((void)0)
 #endif
+
+
 
 
 template<typename complex_t>
@@ -58,11 +61,11 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
     handle->beta = 2.0;
 
     // Commonly used constants
-    handle->zero = make_cuComplex(0,0);
-    handle->one = make_cuComplex(1,0);
-    handle->two = make_cuComplex(2,0);
-    handle->mone = make_cuComplex(-1,0);
-    handle->mtwo = make_cuComplex(-2,0);
+    handle->zero = makeComplex<complex_t>(0,0);
+    handle->one = makeComplex<complex_t>(1,0);
+    handle->two = makeComplex<complex_t>(2,0);
+    handle->mone = makeComplex<complex_t>(-1,0);
+    handle->mtwo = makeComplex<complex_t>(-2,0);
 
     // initialize cublas context
     if (CUBLAS_STATUS_SUCCESS != cublasCreate(&(handle->cublasHandle))) {
@@ -204,12 +207,12 @@ Parament_ErrorCode Parament_setHamiltonian(
 
     if (use_magnus) {
         // amps*(amps-1)/2 pairwise commutators + amps commutators with H0 + amps "real control Hamiltonians"
-        H1memory = dim * dim * sizeof(cuComplex) * ( 2*amps + (amps*(amps-1))/2 );
+        H1memory = dim * dim * sizeof(complex_t) * ( 2*amps + (amps*(amps-1))/2 );
 
     }
     else
     {
-        H1memory = dim * dim * amps * sizeof(cuComplex);
+        H1memory = dim * dim * amps * sizeof(complex_t);
     }
     
 
@@ -231,7 +234,7 @@ Parament_ErrorCode Parament_setHamiltonian(
     error = cudaMemcpy(handle->H0, H0, dim * dim * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
-    error = cudaMemcpy(handle->H1, H1, dim*dim*amps*sizeof(cuComplex), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(handle->H1, H1, dim*dim*amps*sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
 
     // Helper Arrays
@@ -239,7 +242,7 @@ Parament_ErrorCode Parament_setHamiltonian(
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         goto error_cleanup;
     }
-    if (CUBLAS_STATUS_SUCCESS != cublasCaxpy(handle->cublasHandle, dim, &handle->one, handle->one_GPU, 0,
+    if (CUBLAS_STATUS_SUCCESS != cublasGaxpy(handle->cublasHandle, dim, &handle->one, handle->one_GPU, 0,
             handle->one_GPU_diag, 1)) {
         handle->lastError = PARAMENT_STATUS_CUBLAS_FAILED;
         goto error_cleanup;
@@ -254,9 +257,9 @@ Parament_ErrorCode Parament_setHamiltonian(
     
     if (use_magnus){
         PARAMENT_DEBUG("Calculate Commutators");
-        cuComplex *currentH1Addr;
-        cuComplex *currentH2Addr;
-        cuComplex *currentCommAddr;
+        complex_t *currentH1Addr;
+        complex_t *currentH2Addr;
+        complex_t *currentCommAddr;
 
         for (int i = 0;i<amps;++i){
 
@@ -272,7 +275,7 @@ Parament_ErrorCode Parament_setHamiltonian(
             
             
             // Commutators with H0
-            if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+            if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
             &handle->one,
@@ -284,7 +287,7 @@ Parament_ErrorCode Parament_setHamiltonian(
                 goto error_cleanup;
             };
 
-            if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+            if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
             &handle->mone,
@@ -306,7 +309,7 @@ Parament_ErrorCode Parament_setHamiltonian(
 
 
 
-                if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+                if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
                 &handle->one,
@@ -318,7 +321,7 @@ Parament_ErrorCode Parament_setHamiltonian(
                     goto error_cleanup;
                 };
 
-                if (CUBLAS_STATUS_SUCCESS != cublasCgemm(handle->cublasHandle,
+                if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
                 &handle->mone,
@@ -334,10 +337,6 @@ Parament_ErrorCode Parament_setHamiltonian(
             }
         }
     }
-        //PARAMENT_DEBUG("Hier kommt H1 nach Trafo");
-        //readback(handle->H1,H1memory/sizeof(cuComplex));
-
-
 
     // nvtxMarkA("Set Hamiltonian routine completed");
     handle->lastError = PARAMENT_STATUS_SUCCESS;
@@ -348,13 +347,14 @@ error_cleanup:
     return handle->lastError;
 }
 
-template<typename complex_t>
-static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t> *handle, float dt) {
+template<typename complex_t, typename real_t>
+static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t> *handle, real_t dt) {
     // If enabled, automatically determine number of iterations
     if (!handle->MMAX_manual){
         int MMAX_selected;
         MMAX_selected = Parament_selectIterationCycles_fp32(handle->Hnorm, dt);
         if (MMAX_selected == -1){
+            printf("ERROR ERROR ERROR\n");
             return PARAMENT_STATUS_SELECT_SMALLER_DT;
         }
 
@@ -372,10 +372,10 @@ static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t
         return PARAMENT_STATUS_HOST_ALLOC_FAILED;
     }
 
-    // Compute Bessel coefficients
-    float x = dt*(handle->beta - handle->alpha)/2;
+    // Compute Bessel coeffficients
+    double x = dt*(handle->beta - handle->alpha)/2;
     for (int k = 0; k < handle->MMAX + 1; k++) {
-        handle->J[k] = cuCmulf(imag_power(k), make_cuComplex(_jn(k, x), 0));
+        handle->J[k] = calculate_bessel_coeffs<complex_t>(k,x);
     }
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -430,11 +430,11 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
         handle->curr_max_pts = pts;
 
         // Fill c0 array with ones
-        if (CUBLAS_STATUS_SUCCESS != cublasCscal(handle->cublasHandle, pts, &handle->zero, handle->c0, 1)) {
+        if (CUBLAS_STATUS_SUCCESS != cublasGscal(handle->cublasHandle, pts, &handle->zero, handle->c0, 1)) {
             freeWorkingMemory(handle);
             return PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
         }
-        if (CUBLAS_STATUS_SUCCESS != cublasCaxpy(handle->cublasHandle, pts, &handle->one, handle->one_GPU, 0,
+        if (CUBLAS_STATUS_SUCCESS != cublasGaxpy(handle->cublasHandle, pts, &handle->one, handle->one_GPU, 0,
                 handle->c0, 1)) {
             freeWorkingMemory(handle);
             return PARAMENT_STATUS_CUBLAS_FAILED;
@@ -451,11 +451,11 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, float dt) {
+static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, double dt) {
 
     unsigned int dim = handle->dim;
     cublasStatus_t error;
-    error = cublasCgemm(handle->cublasHandle,
+    error = cublasGgemm(handle->cublasHandle,
          CUBLAS_OP_N, CUBLAS_OP_N,
          dim*dim, pts, 1,
          &handle->one,
@@ -538,7 +538,7 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
      
 
 
-    error = cublasCgemm(handle->cublasHandle,
+    error = cublasGgemm(handle->cublasHandle,
         CUBLAS_OP_N, CUBLAS_OP_T,
         dim*dim, expansion_pts, expansion_amps,
         &handle->one,
@@ -556,7 +556,7 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
 }
 
 template<typename complex_t>
-static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle, float dt, unsigned int pts) {
+static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle, double dt, unsigned int pts) {
     // define some short-form aliases...
     const unsigned int dim = handle->dim;
     complex_t *const D0 = handle->D0;
@@ -567,19 +567,19 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
 
     // Rescale dt
     dt = 2/(handle->beta - handle->alpha)*2;
-    complex_t dt_complex = make_cuComplex(dt, 0);
+    complex_t dt_complex = makeComplex<complex_t>(dt, 0);
 
     complex_t* ptr_accumulate;
 
     for (int k = handle->MMAX; k >= 0; k--) {
         if (k == handle->MMAX){
-            error = cublasCscal(handle->cublasHandle, pts*dim*dim, &handle->zero, D0, 1);
+            error = cublasGscal(handle->cublasHandle, pts*dim*dim, &handle->zero, D0, 1);
             if (error != CUBLAS_STATUS_SUCCESS)
                 return PARAMENT_STATUS_CUBLAS_FAILED;
         }
         else {
             // D0 = D0 + 2 X @ D1 * dt
-            error = cublasCgemmStridedBatched(handle->cublasHandle,
+            error = cublasGgemmStridedBatched(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
                 &dt_complex,
@@ -604,14 +604,14 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
 
         if (k == handle->MMAX - 1) {
             ptr_accumulate = &handle->zero;
-            //cublasCscal(handle, pts*dim*dim, &zero, D1, 1);
+            //cublasGscal(handle, pts*dim*dim, &zero, D1, 1);
         }
         if (k == 0){
             ptr_accumulate = &handle->mtwo;
         }
 
         // D1 = D1 + 2 X @ D0
-        error = cublasCgemmStridedBatched(handle->cublasHandle,
+        error = cublasGgemmStridedBatched(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
             &dt_complex,
@@ -652,7 +652,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
         pad = remain_pts % 2;
         remain_pts = remain_pts/2;
 
-        error = cublasCgemmStridedBatched(handle->cublasHandle,
+        error = cublasGgemmStridedBatched(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_T,
             dim, dim, dim,
             &handle->one,
@@ -667,7 +667,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
 
         if (pad>0){
             // One left over, need to copy to Array
-            error = cublasCcopy(handle->cublasHandle,
+            error = cublasGcopy(handle->cublasHandle,
                 dim*dim,
                 D1 + dim*dim*(remain_pts*2), 1,
                 D1 + dim*dim*(remain_pts), 1
@@ -681,7 +681,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
 }
 
 
-int Parament_selectIterationCycles_fp32(float H_norm, float dt) {
+int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
     if (H_norm*dt <= 0.032516793) { return 3; };
     if (H_norm*dt <= 0.219062571) { return 5; };
     if (H_norm*dt <= 0.619625593) { return 7; };
@@ -696,7 +696,29 @@ int Parament_selectIterationCycles_fp32(float H_norm, float dt) {
     if (H_norm*dt <= 9.919320831) { return 25; };
     if (H_norm*dt <= 11.27088616) { return 27; };
     if (H_norm*dt <= 12.65570085) { return 29; } else {return -1;};
+}
 
+int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
+    if (H_norm*dt <= 0.000213616) { return 3; };
+    if (H_norm*dt <= 0.00768149) { return 5; };
+    if (H_norm*dt <= 0.0501474) { return 7; };
+    if (H_norm*dt <= 0.162592) { return 9; };
+    if (H_norm*dt <= 0.368382) { return 11; };
+    if (H_norm*dt <= 0.676861) { return 13; };
+    if (H_norm*dt <= 1.08784) { return 15; };
+    if (H_norm*dt <= 1.59605) { return 17; };
+    if (H_norm*dt <= 2.19402) { return 19; };
+    if (H_norm*dt <= 2.87366) { return 21; };
+    if (H_norm*dt <= 3.62716) { return 23; };
+    if (H_norm*dt <= 4.44725) { return 25; };
+    if (H_norm*dt <= 5.3274)  { return 27; };
+    if (H_norm*dt <= 6.26179) { return 29; };
+    if (H_norm*dt <= 7.2453)  { return 31; };
+    if (H_norm*dt <= 8.27338) { return 33; };
+    if (H_norm*dt <= 9.34206) { return 35; };
+    if (H_norm*dt <= 10.4478) { return 37; };
+    if (H_norm*dt <= 11.5875) { return 39; };
+    if (H_norm*dt <= 12.7584) { return 41; } else {return -1;};
 }
 
 template<typename complex_t>
@@ -714,7 +736,7 @@ Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t>
 }
 
 template<typename complex_t>
-Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, float dt, unsigned int pts, unsigned int amps, complex_t *out) {
+Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, double dt, unsigned int pts, unsigned int amps, complex_t *out) {
     PARAMENT_DEBUG("Equiprop C called");
     if (handle->H0 == NULL) {
         handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
@@ -808,7 +830,7 @@ Parament_ErrorCode Parament_setHamiltonian(Parament_Context_f32 *handle, cuCompl
     return Parament_setHamiltonian<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), H0, H1, dim, amps, use_magnus, quadrature_mode);
 }
 
-Parament_ErrorCode Parament_equiprop(Parament_Context_f32 *handle, cuComplex *carr, float dt, unsigned int pts,
+Parament_ErrorCode Parament_equiprop(Parament_Context_f32 *handle, cuComplex *carr, double dt, unsigned int pts,
         unsigned int amps, cuComplex *out) {
     return Parament_equiprop<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle), carr, dt, pts, amps, out);
 }
@@ -824,4 +846,39 @@ Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context_f32 *handl
 
 Parament_ErrorCode Parament_peekAtLastError(Parament_Context_f32 *handle) {
     return Parament_peekAtLastError<cuComplex>(reinterpret_cast<Parament_Context<cuComplex>*>(handle));
+}
+
+// ======================================================================
+// Implementation of the actually exported (i.e. non-templated) functions
+// ======================================================================
+
+Parament_ErrorCode Parament_create_fp64(Parament_Context_f64 **handle_p) {
+    return Parament_create<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>**>(handle_p));
+}
+
+Parament_ErrorCode Parament_destroy_fp64(Parament_Context_f64 *handle) {
+    return Parament_destroy<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle));
+}
+
+Parament_ErrorCode Parament_setHamiltonian_fp64(Parament_Context_f64 *handle, cuDoubleComplex *H0, cuDoubleComplex *H1,
+        unsigned int dim, unsigned int amps, bool use_magnus, Parament_QuadratureSpec quadrature_mode) {
+    return Parament_setHamiltonian<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle), H0, H1, dim, amps, use_magnus, quadrature_mode);
+}
+
+Parament_ErrorCode Parament_equiprop_fp64(Parament_Context_f64 *handle, cuDoubleComplex *carr, double dt, unsigned int pts,
+        unsigned int amps, cuDoubleComplex *out) {
+    return Parament_equiprop<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle), carr, dt, pts, amps, out);
+}
+
+Parament_ErrorCode Parament_setIterationCyclesManually_fp64(Parament_Context_f64 *handle, unsigned int cycles) {
+    return Parament_setIterationCyclesManually<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle),
+        cycles);
+}
+
+Parament_ErrorCode Parament_automaticIterationCycles_fp64(Parament_Context_f64 *handle) {
+    return Parament_automaticIterationCycles<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle));
+}
+
+Parament_ErrorCode Parament_peekAtLastError_fp64(Parament_Context_f64 *handle) {
+    return Parament_peekAtLastError<cuDoubleComplex>(reinterpret_cast<Parament_Context<cuDoubleComplex>*>(handle));
 }

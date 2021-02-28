@@ -65,7 +65,7 @@ class Parament:
         output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
         pts = np.shape(carr)[0]
         carr = np.complex64(carr)
-        self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.single(dt), np.uint(pts), np.uint(self.amps), output))
+        self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
         return np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
 
     def _getErrorMessage(self, code=None):

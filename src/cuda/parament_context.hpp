@@ -8,9 +8,6 @@
 #define NO_CUDA_STUBS
 #include "parament.h"
 
-
-//typedef enum {Just_propagate, Midpoint, Simpson}quadrature_mode;
-
 template<typename complex_t> struct Parament_Context {
     // Handles
     cublasHandle_t cublasHandle;
@@ -25,7 +22,7 @@ template<typename complex_t> struct Parament_Context {
     unsigned int dim;
     
     // Hnorm used for automatically setting the # of iteration cycles
-    float Hnorm;
+    double Hnorm;
 
     // Currently allocated time steps
     unsigned int curr_max_pts;
@@ -40,8 +37,8 @@ template<typename complex_t> struct Parament_Context {
 
     // BESSEL COEFFICIENTS
     complex_t *J;
-    float alpha;
-    float beta;
+    double alpha;
+    double beta;
 
     // Device 
     int numSMs;
