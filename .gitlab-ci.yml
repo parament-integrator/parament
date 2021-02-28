@@ -14,7 +14,7 @@ buildCuda:win:
 buildCuda:linux:
   stage: build
   script:
-    - "&tools/build.sh"
+    - "./tools/build.sh"
   artifacts:
     paths:
       - build/parament
