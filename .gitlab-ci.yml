@@ -17,7 +17,7 @@ buildCuda:linux:
     - "./tools/build.sh"
   artifacts:
     paths:
-      - build/parament
+      - build/parament.bin
       - build/libparament.so
   tags:
     - linux
