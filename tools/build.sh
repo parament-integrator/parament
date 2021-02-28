@@ -5,7 +5,7 @@ OUTPUTDIR=build
 
 mkdir -p build
 cd src/cuda
-echo nvcc "${NVCCFLAGS[@]}" -DPARAMENT_LINK -o "../../$OUTPUTDIR/parament.bin" "${SOURCEFILES[@]}" || exit $?
+nvcc "${NVCCFLAGS[@]}" -DPARAMENT_LINK -o "../../$OUTPUTDIR/parament.bin" "${SOURCEFILES[@]}" || exit $?
 nvcc "${NVCCFLAGS[@]}" -DPARAMENT_BUILD_DLL -o "../../$OUTPUTDIR/libparament.so" "${SOURCEFILES[@]}" || exit $?
 
 cd ../..
