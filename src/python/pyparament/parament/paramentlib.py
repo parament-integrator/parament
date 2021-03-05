@@ -36,6 +36,8 @@ else:
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
+c_cuDoubleComplex_p = np.ctypeslib.ndpointer(np.complex64)
+
 
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
@@ -45,3 +47,8 @@ lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_d
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
 lib.Parament_errorMessage.restype = ctypes.c_char_p
+
+lib.Parament_create_fp64.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
+lib.Parament_destroy_fp64.argtypes = [c_ParamentContext_p]
+lib.Parament_setHamiltonian_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, c_cuDoubleComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
+lib.Parament_equiprop_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, ctypes.c_double, ctypes.c_uint, ctypes.c_uint, c_cuDoubleComplex_p]

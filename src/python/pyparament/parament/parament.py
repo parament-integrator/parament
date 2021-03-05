@@ -12,18 +12,30 @@ logger.setLevel(logging.DEBUG)
 
 
 class Parament:
-    def __init__(self):
+    def __init__(self,precision='fp32'):
         """Foo bar"""
+        if precision == 'fp32':
+            self._use_doubles = False
+        elif precision = 'fp64':
+            self._use_doubles = True
+        else:
+            raise ValueError("precision must be either 'fp32' or 'fp64'")
         self._lib = parament.paramentlib.lib
         self._handle = ctypes.c_void_p()
         logger.debug('Created Parament context')
-        self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
+        if self._use_doubles:            
+            self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
+        else:
+            self._checkError(self._lib.Parament_create_fp64(ctypes.byref(self._handle)))
         self.dim = 0
 
     def destroy(self):
         """Foo bar"""
         logger.debug('Destroying Parament context')
-        self._checkError(self._lib.Parament_destroy(self._handle))
+        if self._use_doubles:
+            self._checkError(self._lib.Parament_destroy_fp64(self._handle))
+        else:
+            self._checkError(self._lib.Parament_destroy(self._handle))
         self._handle = None
     
     def __del__(self):
@@ -51,21 +63,35 @@ class Parament:
 
         self.dim = dim
         self.amps = amps
-        self._checkError(self._lib.Parament_setHamiltonian(
-            self._handle,
-            np.complex64(np.asfortranarray(H0)),
-            np.complex64(np.asfortranarray(H1)),
-            dim, amps, use_magnus, modesel
-        ))
+        if self._use_doubles:
+            self._checkError(self._lib.Parament_setHamiltonian_fp64(
+                self._handle,
+                np.complex128(np.asfortranarray(H0)),
+                np.complex128(np.asfortranarray(H1)),
+                dim, amps, use_magnus, modesel
+            ))
+        else:
+
+            self._checkError(self._lib.Parament_setHamiltonian(
+                self._handle,
+                np.complex64(np.asfortranarray(H0)),
+                np.complex64(np.asfortranarray(H1)),
+                dim, amps, use_magnus, modesel
+            ))
         logger.debug("Python setHamiltonian completed")
 
     def equiprop(self, carr, dt):
         """Foo bar"""
         logger.debug("EQUIPROP PYTHON CALLED")
-        output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
         pts = np.shape(carr)[0]
-        carr = np.complex64(carr)
-        self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
+        if self._use_doubles:
+            output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
+            carr = np.complex128(carr)
+            self._checkError(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
+        else:
+            output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
+            carr = np.complex64(carr)
+            self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
         return np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
 
     def _getErrorMessage(self, code=None):
