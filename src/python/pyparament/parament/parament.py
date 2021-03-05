@@ -15,18 +15,26 @@ class Parament:
     def __init__(self,precision='fp32'):
         """Foo bar"""
         if precision == 'fp32':
+            print("So you want fp32...")
             self._use_doubles = False
         elif precision == 'fp64':
+            print("so you want fp64....")
             self._use_doubles = True
         else:
+            print("So you want something weired...")
             raise ValueError("precision must be either 'fp32' or 'fp64'")
+
+        print("==================")
+        print(" USE DOUBLES?")
+        print(self._use_doubles)
+        print("==================")
         self._lib = parament.paramentlib.lib
         self._handle = ctypes.c_void_p()
         logger.debug('Created Parament context')
         if self._use_doubles:            
-            self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
-        else:
             self._checkError(self._lib.Parament_create_fp64(ctypes.byref(self._handle)))
+        else:
+            self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
         self.dim = 0
 
     def destroy(self):

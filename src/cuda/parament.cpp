@@ -94,6 +94,7 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
         goto error_cleanup3;
     }
     PARAMENT_DEBUG("created Parament context");
+    PARAMENT_DEBUG(typeid(complex_t).name());
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
 
@@ -187,6 +188,7 @@ template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
         Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps,
         bool use_magnus, Parament_QuadratureSpec quadrature_mode) {
+    
     // Hamiltonian might have been set before, deallocate first
     freeHamiltonian(handle);
 
@@ -355,17 +357,23 @@ template<typename complex_t, typename real_t>
 static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t> *handle, real_t dt) {
     // If enabled, automatically determine number of iterations
     if (!handle->MMAX_manual){
-        int MMAX_selected;
-        MMAX_selected = Parament_selectIterationCycles_fp32(handle->Hnorm, dt);
-        if (MMAX_selected == -1){
+        int MMAX_selected = -1;
+        if (typeid(complex_t) == typeid(cuComplex)) {
+            MMAX_selected = Parament_selectIterationCycles_fp32(handle->Hnorm, dt);
+            PARAMENT_DEBUG("The FP32 selectIterationCycles routine has taken %d", MMAX_selected);
+        }
+        if (typeid(complex_t) == typeid(cuDoubleComplex)) {
+            MMAX_selected = Parament_selectIterationCycles_fp64(handle->Hnorm, dt);
+            PARAMENT_DEBUG("The FP64 selectIterationCycles routine has taken %d", MMAX_selected);
+        }
+        if (MMAX_selected <= 3){
             printf("ERROR ERROR ERROR\n");
             return PARAMENT_STATUS_SELECT_SMALLER_DT;
         }
 
         handle->MMAX = MMAX_selected;
     }
-
-    PARAMENT_DEBUG("MMAX is %d\n",handle->MMAX);
+    PARAMENT_DEBUG("\nMMAX is %d\n",handle->MMAX);
 
     // Allocate Bessel coefficients
     free(handle->J);
@@ -686,6 +694,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
 
 
 int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
+    printf("FP32 HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.032516793) { return 3; };
     if (H_norm*dt <= 0.219062571) { return 5; };
     if (H_norm*dt <= 0.619625593) { return 7; };
@@ -703,6 +712,7 @@ int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
 }
 
 int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
+    printf("HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.000213616) { return 3; };
     if (H_norm*dt <= 0.00768149) { return 5; };
     if (H_norm*dt <= 0.0501474) { return 7; };

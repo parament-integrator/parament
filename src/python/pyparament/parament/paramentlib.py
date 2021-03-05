@@ -36,7 +36,7 @@ else:
 
 c_ParamentContext_p = ctypes.c_void_p  # void ptr is a good enough abstraction :)
 c_cuComplex_p = np.ctypeslib.ndpointer(np.complex64)
-c_cuDoubleComplex_p = np.ctypeslib.ndpointer(np.complex64)
+c_cuDoubleComplex_p = np.ctypeslib.ndpointer(np.complex128)
 
 
 # define argument and return types
