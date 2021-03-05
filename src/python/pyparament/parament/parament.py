@@ -16,7 +16,7 @@ class Parament:
         """Foo bar"""
         if precision == 'fp32':
             self._use_doubles = False
-        elif precision = 'fp64':
+        elif precision == 'fp64':
             self._use_doubles = True
         else:
             raise ValueError("precision must be either 'fp32' or 'fp64'")
