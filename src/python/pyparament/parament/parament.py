@@ -12,33 +12,48 @@ logger.setLevel(logging.DEBUG)
 
 
 class Parament:
-    def __init__(self,precision='fp32'):
-        """Foo bar"""
-        if precision == 'fp32':
-            print("So you want fp32...")
-            self._use_doubles = False
-        elif precision == 'fp64':
-            print("so you want fp64....")
-            self._use_doubles = True
-        else:
-            print("So you want something weired...")
-            raise ValueError("precision must be either 'fp32' or 'fp64'")
+    """Create a new Parament context.
 
-        print("==================")
-        print(" USE DOUBLES?")
-        print(self._use_doubles)
-        print("==================")
+    The context stores settings and state between function calls. Use :py:meth:`setHamiltonian` to load the Hamiltonians,
+    and then call :py:meth:`equiprop` to compute the propagator.
+
+    Parameters
+    ----------
+    precision : {'fp32', 'fp64'}
+        The native precision of the new context.
+
+    Examples
+    --------
+    >>> gpu_runner = parament.Parament()
+    >>> H0 = np.array([[1, 0], [0, -1]])
+    >>> H1 = np.array([[0, 1], [1, 0]])
+    >>> dt = 1.0
+    >>> gpu_runner.setHamiltonian(H0, H1)
+    >>> gpu_runner.equiprop(np.zeros(1), dt)
+    array([[0.54030234-0.84147096j, 0.        +0.j        ],
+       [0.        +0.j        , 0.54030234+0.84147096j]], dtype=complex64)
+
+    See Also
+    --------
+    :c:func:`Parament_create`: The underlying native function.
+    """
+    def __init__(self, precision='fp32'):
+        if precision not in ('fp32', 'fp64'):
+            raise ValueError("precision must be either 'fp32' or 'fp64'")
+        self._use_doubles = (precision == 'fp64')
+
         self._lib = parament.paramentlib.lib
         self._handle = ctypes.c_void_p()
-        logger.debug('Created Parament context')
         if self._use_doubles:            
             self._checkError(self._lib.Parament_create_fp64(ctypes.byref(self._handle)))
         else:
             self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
+        logger.debug('Created Parament context')
         self.dim = 0
+        self.amps = 0
 
     def destroy(self):
-        """Foo bar"""
+        """Destroy the context. Will implicitly be called when the object is garbage-collected."""
         logger.debug('Destroying Parament context')
         if self._use_doubles:
             self._checkError(self._lib.Parament_destroy_fp64(self._handle))
@@ -50,17 +65,34 @@ class Parament:
         if self._handle is not None:
             self.destroy()
 
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False, quadrature_mode='just propagate'):
-        """Foo bar. Add docs here"""
-        # todo: input validation...
-        if quadrature_mode == 'just propagate':
-            modesel = 0
+    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False, quadrature_mode='none'):
+        """Load the hamiltonians.
+
+        Parameters
+        ----------
+        H0 : ndarray
+            Drift Hamiltionian.
+        H1 : ndarray
+            Interaction Hamiltonian.
+        use_magnus : bool
+            Enable or disable the 1st order Magnus expansion. When ``true``, pass 'simpson' as `quadrature_mode`.
+        quadrature_mode : {'none', 'midpoint', 'simpson'}
+            The quadrature rule used for interpolating the control amplitudes.
+
+
+        See Also
+        --------
+        :c:func:`Parament_setHamiltonian`: The underlying native function.
+        """
+        H0 = np.atleast_2d(H0)
+        if quadrature_mode == 'none':
+            modesel = PARAMENT_QUADRATURE_NONE
         elif quadrature_mode == 'midpoint':
-            modesel = 0x1000000
+            modesel = PARAMENT_QUADRATURE_MIDPOINT
         elif quadrature_mode == 'simpson':
-            modesel = 0x2000000
+            modesel = PARAMENT_QUADRATURE_SIMPSON
         else:
-            raise ValueError('unkonown quadrature mode selected')
+            raise ValueError('unknown quadrature mode selected')
         dim = np.shape(H0)
         dim = dim[0]
         amps = np.shape(H1)
@@ -89,17 +121,33 @@ class Parament:
         logger.debug("Python setHamiltonian completed")
 
     def equiprop(self, carr, dt):
-        """Foo bar"""
+        """Compute the propagator from the Hamiltionians.
+
+        Parameters
+        ----------
+        carr: ndarrray
+            Array of the control field amplitudes.
+        dt: float
+            Time step.
+
+        Returns
+        -------
+        ndarray
+            The computed propagator
+
+        """
         logger.debug("EQUIPROP PYTHON CALLED")
         pts = np.shape(carr)[0]
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)
-            self._checkError(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
+            self._checkError(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt),
+                                                              np.uint(pts), np.uint(self.amps), output))
         else:
             output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
             carr = np.complex64(carr)
-            self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt), np.uint(pts), np.uint(self.amps), output))
+            self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt),
+                                                         np.uint(pts), np.uint(self.amps), output))
         return np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
 
     def _getErrorMessage(self, code=None):

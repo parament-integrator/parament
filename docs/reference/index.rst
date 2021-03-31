@@ -17,6 +17,17 @@ Functions
 .. autocmodule:: cuda/parament.h
     :members: Parament_peekAtLastError, Parament_errorMessage
 
+Double-precision functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autocmodule:: cuda/parament.h
+   :members: Parament_create_fp64, Parament_destroy_fp64, Parament_setHamiltonian_fp64, Parament_equiprop_fp64
+
+.. autocmodule:: cuda/parament.h
+   :members: Parament_selectIterationCycles_fp64, Parament_setIterationCyclesManually_fp64, Parament_automaticIterationCycles_fp64, Parament_peekAtLastError_fp64
+
+
+
 Constants
 ~~~~~~~~~
 

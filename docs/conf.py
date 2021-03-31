@@ -73,6 +73,17 @@ except KeyError:
 
 c_autodoc_roots = [os.path.abspath('../src')]
 
+def pre_process(app, filename, contents, *args):
+    file_body = contents[0]
+
+    modified_contents = '''
+    #ifndef SPHINX_C_AUTODOC
+    #define SPHINX_C_AUTODOC
+    #endif''' + file_body
+
+    # replace the list to return back to the sphinx extension
+    contents[:] = [modified_contents]
+
 # -- Configure Python Autodoc -----------------------------------------------------
 # Autodoc actually imports (i.e. runs) a module to discover the docstrings. The machine building the docs shouldn't have
 # to build parament itself. So instead, we mock an installed parament by pointing to the source code instead.
@@ -87,4 +98,9 @@ autodoc_mock_imports = [
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = False
+
+
+# -- Setup ------------------------------------------------------------------------
+def setup(app):
+    app.connect("c-autodoc-pre-process", pre_process)
 

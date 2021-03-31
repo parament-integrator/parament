@@ -3,7 +3,6 @@ import pathlib
 import ctypes
 import numpy as np
 
-# Todo: switch Win vs Linux
 USE_SHARED_PARAMENT = os.environ.get("USE_SHARED_PARAMENT")
 PARAMENT_LIB_DIR = os.environ.get("PARAMENT_LIB_DIR")
 
@@ -42,7 +41,8 @@ c_cuDoubleComplex_p = np.ctypeslib.ndpointer(np.complex128)
 # define argument and return types
 lib.Parament_create.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy.argtypes = [c_ParamentContext_p]
-lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
+lib.Parament_setHamiltonian.argtypes = [c_ParamentContext_p, c_cuComplex_p, c_cuComplex_p, ctypes.c_uint, ctypes.c_uint,
+                                        ctypes.c_bool, ctypes.c_int]
 lib.Parament_equiprop.argtypes = [c_ParamentContext_p, c_cuComplex_p, ctypes.c_double, ctypes.c_uint, ctypes.c_uint, c_cuComplex_p]
 #lib.Parament_getLastError.argtypes = [c_ParamentContext_p]
 lib.Parament_errorMessage.argtypes = [ctypes.c_int]
@@ -50,5 +50,7 @@ lib.Parament_errorMessage.restype = ctypes.c_char_p
 
 lib.Parament_create_fp64.argtypes = [ctypes.POINTER(c_ParamentContext_p)]
 lib.Parament_destroy_fp64.argtypes = [c_ParamentContext_p]
-lib.Parament_setHamiltonian_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, c_cuDoubleComplex_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
-lib.Parament_equiprop_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, ctypes.c_double, ctypes.c_uint, ctypes.c_uint, c_cuDoubleComplex_p]
+lib.Parament_setHamiltonian_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, c_cuDoubleComplex_p,
+                                             ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
+lib.Parament_equiprop_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, ctypes.c_double, ctypes.c_uint,
+                                       ctypes.c_uint, c_cuDoubleComplex_p]
