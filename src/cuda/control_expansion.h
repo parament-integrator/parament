@@ -2,7 +2,6 @@
 #define CONTROL_EXPANSION_H_
 
 
-
 #ifndef NO_CUDA_STUBS
 typedef struct cuComplex cuComplex;
 #endif  // NO_CUDA_STUBS

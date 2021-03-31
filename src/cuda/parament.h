@@ -7,30 +7,31 @@ extern "C" {
 #include<stdbool.h>
 #endif
 
-#ifdef PARAMENT_BUILD_DLL
-#if defined(_MSC_VER)
-    // Microsoft
-    #define LIBSPEC __declspec(dllexport)
-#elif defined(__GNUC__)
-    // GCC 
-    #define LIBSPEC __attribute__((visibility("default")))
-#else
-    // do nothing and hope for the best?
+#ifdef SPHINX_C_AUTODOC
     #define LIBSPEC
-#endif
+#elif defined(PARAMENT_BUILD_DLL)
+    #if defined(_MSC_VER)
+        // Microsoft
+        #define LIBSPEC __declspec(dllexport)
+    #elif defined(__GNUC__)
+        // GCC
+        #define LIBSPEC __attribute__((visibility("default")))
+    #endif
 #elif defined(PARAMENT_LINK)
-    #define LIBSPEC
+//    #define LIBSPEC
 #else
-#if defined(_MSC_VER)
-    // Microsoft
-    #define LIBSPEC __declspec(dllexport)
-#elif defined(__GNUC__)
-    // GCC 
-    #define LIBSPEC __attribute__((visibility("default")))
-#else
-    // do nothing and hope for the best?
-    #define LIBSPEC
+    #if defined(_MSC_VER)
+        // Microsoft
+        #define LIBSPEC __declspec(dllimport)
+    #elif defined(__GNUC__)
+        // GCC
+        #define LIBSPEC __attribute__((visibility("default")))
+    #endif
 #endif
+
+// Fall-back. Not going to end well?
+#ifndef LIBSPEC
+   #define LIBSPEC
 #endif
 
 #ifndef NO_CUDA_STUBS
@@ -131,6 +132,10 @@ typedef enum Parament_ErrorCode {
  *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_INIT_FAILED` when Parament fails to initialize a cuBLAS context.
  *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when a call to :c:func:`cudaMalloc()` failed.
  *     - :c:enumerator:`PARAMENT_FAIL` when an unknown error occurred.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_create_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_p);
 
@@ -149,6 +154,10 @@ LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_
  * -------
  * :c:enum:`Parament_ErrorCode`
  *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_destroy_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle);
 
@@ -185,6 +194,10 @@ LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle)
  *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  *     - :c:enumerator:`PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION` when passing `use_magnus=True` without also
  *       passing :c:enumerator:`PARAMENT_QUADRATURE_SIMPSON` as `quadrature_mode`.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_setHamiltonian_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *handle, cuComplex *H0, cuComplex *H1,
     unsigned int dim, unsigned int amps, bool use_magnus, enum Parament_QuadratureSpec quadrature_mode);
@@ -214,6 +227,10 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  *     - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
  *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_equiprop_fp64`: The double precision variant
  */
  LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, double dt, unsigned int pts, unsigned int amps, cuComplex *out);
 
@@ -234,6 +251,10 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  * int
  *     The required iteration count. Returns -1 if the product of norm and dt is too large, and convergence cannot be
  *     guaranteed within a reasonable iteration count.
+ *
+ * See Also
+ * --------
+ * :c:func:`selectIterationCycles_fp64`: The double precision variant
  */
 LIBSPEC int Parament_selectIterationCycles_fp32(double H_norm, double dt);
 
@@ -255,6 +276,7 @@ LIBSPEC int Parament_selectIterationCycles_fp32(double H_norm, double dt);
  * See Also
  * --------
  * :c:func:`Parament_automaticIterationCycles` : Restore the default behaviour.
+ * :c:func:`Parament_setIterationCyclesManually_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_Context_f32 *handle, unsigned int cycles);
 
@@ -270,6 +292,10 @@ LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually(struct Parament_C
  * -------
  * :c:enum:`Parament_ErrorCode`
  *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_automaticIterationCycles_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Context_f32 *handle);
 
@@ -286,6 +312,10 @@ LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles(struct Parament_Con
  * :c:enum:`Parament_ErrorCode`
  *     The error code returned by the last Parament call. :c:func:`Parament_peekAtLastError` itself does not overwrite
  *     the error code.
+ *
+ * See Also
+ * --------
+ * :c:func:`Parament_peekAtLastError_fp64`: The double precision variant
  */
 LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 *handle);
 
@@ -300,24 +330,46 @@ LIBSPEC Parament_ErrorCode Parament_peekAtLastError(struct Parament_Context_f32 
 LIBSPEC const char *Parament_errorMessage(Parament_ErrorCode errorCode);
 
 
+/**
+ * Double-precision version of :c:func:`Parament_create`.
+ */
 LIBSPEC Parament_ErrorCode Parament_create_fp64(Parament_Context_f64 **handle_p);
 
-
+/**
+ * Double-precision version of :c:func:`Parament_destroy`.
+ */
 LIBSPEC Parament_ErrorCode Parament_destroy_fp64(Parament_Context_f64 *handle);
 
-
+/**
+ * Double-precision version of :c:func:`Parament_setHamiltonian`.
+ */
 LIBSPEC Parament_ErrorCode Parament_setHamiltonian_fp64(Parament_Context_f64 *handle, cuDoubleComplex *H0, cuDoubleComplex *H1,
         unsigned int dim, unsigned int amps, bool use_magnus, Parament_QuadratureSpec quadrature_mode);
 
+/**
+ * Double-precision version of :c:func:`Parament_equiprop`.
+ */
 LIBSPEC Parament_ErrorCode Parament_equiprop_fp64(Parament_Context_f64 *handle, cuDoubleComplex *carr, double dt, unsigned int pts,
         unsigned int amps, cuDoubleComplex *out);
 
+/**
+ * Double-precision version of :c:func:`Parament_setIterationCyclesManually`.
+ */
 LIBSPEC Parament_ErrorCode Parament_setIterationCyclesManually_fp64(Parament_Context_f64 *handle, unsigned int cycles);
 
+/**
+ * Double-precision version of :c:func:`Parament_automaticIterationCycles`.
+ */
 LIBSPEC Parament_ErrorCode Parament_automaticIterationCycles_fp64(Parament_Context_f64 *handle);
 
+/**
+ * Double-precision version of :c:func:`Parament_peekAtLastError`.
+ */
 LIBSPEC Parament_ErrorCode Parament_peekAtLastError_fp64(Parament_Context_f64 *handle);
 
+/**
+ * Double-precision version of :c:func:`Parament_selectIterationCycles_fp32`.
+ */
 LIBSPEC int Parament_selectIterationCycles_fp64(double H_norm, double dt);
 
 

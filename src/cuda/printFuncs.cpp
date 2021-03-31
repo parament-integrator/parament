@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "printFuncs.h"
+#include "printFuncs.hpp"
 #include <iostream>
 
 template<typename complex_t>

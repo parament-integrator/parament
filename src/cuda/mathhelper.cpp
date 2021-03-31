@@ -79,8 +79,6 @@ cuDoubleComplex calculate_bessel_coeffs<cuDoubleComplex>(int k, double x){
     return cuCmul(imag_power_fp64(k), make_cuDoubleComplex(BesselJn(k, x), 0));
 }
 
-
-
 double OneNorm(cuComplex* mat, unsigned int dim) { 
     double sum = 0; 
     double result = 0;
@@ -94,9 +92,7 @@ double OneNorm(cuComplex* mat, unsigned int dim) {
         if (sum > result) {
             result = sum;
         }
-        
-    } 
-    
+    }
     return result;
 } 
 
@@ -113,9 +109,7 @@ double OneNorm(cuDoubleComplex* mat, unsigned int dim) {
         if (sum > result) {
             result = sum;
         }
-        
-    } 
-    
+    }
     return result;
 } 
 

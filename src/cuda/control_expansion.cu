@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #define NO_CUDA_STUBS
-
 #include "control_expansion.h"
 
 // 3D thread block indexing
