@@ -258,6 +258,11 @@ Parament_ErrorCode Parament_setHamiltonian(
 
     // Determine norm. We use the 1-norm as an upper limit
     handle->Hnorm = OneNorm(H0,dim);
+    for (int i = 0; i < amps; i++){
+        PARAMENT_DEBUG("Iterate over amplitude");
+         handle->Hnorm += OneNorm(H1+i*dim*dim,dim);
+    }
+    
     handle->alpha = -handle->Hnorm;
     handle->beta = handle->Hnorm;
     
