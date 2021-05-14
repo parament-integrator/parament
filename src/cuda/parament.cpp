@@ -371,8 +371,7 @@ static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t
             MMAX_selected = Parament_selectIterationCycles_fp64(handle->Hnorm, dt);
             PARAMENT_DEBUG("The FP64 selectIterationCycles routine has taken %d", MMAX_selected);
         }
-        if (MMAX_selected <= 3){
-            printf("ERROR ERROR ERROR\n");
+        if (MMAX_selected < 3){
             return PARAMENT_STATUS_SELECT_SMALLER_DT;
         }
 
@@ -699,7 +698,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
 
 
 int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
-    printf("FP32 HNORM*DT = %f\n", H_norm*dt );
+    PARAMENT_DEBUG("FP32 HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.032516793) { return 3; };
     if (H_norm*dt <= 0.219062571) { return 5; };
     if (H_norm*dt <= 0.619625593) { return 7; };
@@ -717,7 +716,7 @@ int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
 }
 
 int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
-    printf("HNORM*DT = %f\n", H_norm*dt );
+    PARAMENT_DEBUG("HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.000213616) { return 3; };
     if (H_norm*dt <= 0.00768149) { return 5; };
     if (H_norm*dt <= 0.0501474) { return 7; };

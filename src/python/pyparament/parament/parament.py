@@ -98,6 +98,8 @@ class Parament:
                 self._use_qutip = True
                 self._qutip_envelope = H0
                 H0 = H0.data.todense()
+            else: 
+                self._use_qutip = False
         H0 = np.atleast_2d(H0)
         if quadrature_mode == 'none':
             modesel = PARAMENT_QUADRATURE_NONE
@@ -206,5 +208,7 @@ class Parament:
         raise exceptionClass(f"Error code {error_code}: {message}")
 
 def device_info():
+    """Print information about the available CUDA resources to stdout
+    """
     _lib = parament.paramentlib.lib
     _lib.device_info()
