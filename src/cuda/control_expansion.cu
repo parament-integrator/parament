@@ -186,8 +186,6 @@ void control_magnus(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int amps
 {
     dim3 threadsPerBlock(256/(amps*amps), amps,amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_magnus<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n, dt);
 }
 
@@ -195,8 +193,6 @@ void control_magnus(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, unsig
 {
     dim3 threadsPerBlock(256/(amps*amps), amps,amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_magnus_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n, dt);
 }
 
@@ -205,8 +201,6 @@ void control_midpoint(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int am
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_midpoint<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
 }
 
@@ -214,8 +208,6 @@ void control_midpoint(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, uns
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_midpoint_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
 }
 
@@ -224,8 +216,6 @@ void control_simpson(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int amp
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks((n-3)/2 / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_simpson<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
 }
 
@@ -233,7 +223,5 @@ void control_simpson(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, unsi
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks((n-3)/2 / threadsPerBlock.x+1, 1);
-    //printf("n=%d und amps=%d \n",n,amps);
-    //printf("Grid : {%d, %d, %d} blocks. Blocks : {%d, %d, %d} threads.\n", threadsPerBlock.x, threadsPerBlock.y, threadsPerBlock.z, numBlocks.x, numBlocks.y, numBlocks.z);
     generate_simpson_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
 }

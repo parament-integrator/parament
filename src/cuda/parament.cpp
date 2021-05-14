@@ -278,13 +278,7 @@ Parament_ErrorCode Parament_setHamiltonian(
             
             currentH1Addr   = handle->H1 + i*dim*dim;
             currentCommAddr = handle->H1 + (i+amps)*dim*dim;
-            //printf("%d\n",(i+amps)*dim*dim);
-            //PARAMENT_DEBUG("Hier kommt H1addr");
-            //readback(currentH1Addr,dim*dim);
-            //PARAMENT_DEBUG("Hier kommt handle->H0");
-            //readback(handle->H0,dim*dim);
-            
-            
+
             // Commutators with H0
             if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
@@ -530,23 +524,12 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
     }
 
     if (handle->enable_magnus == true){
-        // Magnus coefficients
-        // We need an odd number of coefficients
-        //PARAMENT_DEBUG("Hier kommt das alte Array");
-        //printf("n=%d\n",pts);
-        //printf("amps=%d\n",amps);
-        
-        //readback(handle->c1,pts*amps);
 
         control_magnus(handle->c1,handle->c2,amps,pts,dt, handle->numSMs);
 
         expansion_array = handle->c2;
         expansion_amps = 2*amps+((amps-1)*amps)/2;
         expansion_pts = (pts-1)/2;
-
-        //PARAMENT_DEBUG("Hier kommt das neue Array");
-        //readback(handle->c2,expansion_pts*expansion_amps);
-
 
     }
 
