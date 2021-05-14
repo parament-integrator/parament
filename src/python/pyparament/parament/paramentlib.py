@@ -54,3 +54,4 @@ lib.Parament_setHamiltonian_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComp
                                              ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_int]
 lib.Parament_equiprop_fp64.argtypes = [c_ParamentContext_p, c_cuDoubleComplex_p, ctypes.c_double, ctypes.c_uint,
                                        ctypes.c_uint, c_cuDoubleComplex_p]
+lib.device_info.argtypes = []

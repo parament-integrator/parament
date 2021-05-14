@@ -35,6 +35,7 @@ LIBSPEC void device_info(void) {
         printf("Failed to query the number of CUDA devices. Error code: %d\n", error);
         return;
     }
+    printf("PARAMENT_INFO:\n");
     printf("Total number of CUDA devices: %d\n", nDevices);
     printf("-----------------------------------\n");
     for (int i = 0; i < nDevices; i++) {

@@ -204,3 +204,7 @@ class Parament:
 
         message = self._getErrorMessage(error_code)
         raise exceptionClass(f"Error code {error_code}: {message}")
+
+def device_info():
+    _lib = parament.paramentlib.lib
+    _lib.device_info()
