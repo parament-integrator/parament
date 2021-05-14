@@ -10,6 +10,13 @@ logger = logging.getLogger('Parament')
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
+# Import qutip if available
+try:
+    import qutip
+    qutip_available = True                 
+except ImportError:
+    qutip_available = False
+
 
 class Parament:
     """Create a new Parament context.
@@ -51,6 +58,8 @@ class Parament:
         logger.debug('Created Parament context')
         self.dim = 0
         self.amps = 0
+        if qutip_available:
+            logger.debug("Qutip support enabled")
 
     def destroy(self):
         """Destroy the context. Will implicitly be called when the object is garbage-collected."""
@@ -65,15 +74,15 @@ class Parament:
         if self._handle is not None:
             self.destroy()
 
-    def setHamiltonian(self, H0: np.ndarray, H1: np.ndarray, use_magnus=False, quadrature_mode='none'):
+    def setHamiltonian(self, H0: np.ndarray, *H1, use_magnus=False, quadrature_mode='none'):
         """Load the hamiltonians.
 
         Parameters
         ----------
         H0 : ndarray
             Drift Hamiltionian.
-        H1 : ndarray
-            Interaction Hamiltonian.
+        *H1 : ndarray
+            Interaction Hamiltonians.
         use_magnus : bool
             Enable or disable the 1st order Magnus expansion. When ``true``, pass 'simpson' as `quadrature_mode`.
         quadrature_mode : {'none', 'midpoint', 'simpson'}
@@ -84,6 +93,11 @@ class Parament:
         --------
         :c:func:`Parament_setHamiltonian`: The underlying native function.
         """
+        if qutip_available:
+            if type(H0) == qutip.Qobj:
+                self._use_qutip = True
+                self._qutip_envelope = H0
+                H0 = H0.data.todense()
         H0 = np.atleast_2d(H0)
         if quadrature_mode == 'none':
             modesel = PARAMENT_QUADRATURE_NONE
@@ -95,12 +109,24 @@ class Parament:
             raise ValueError('unknown quadrature mode selected')
         dim = np.shape(H0)
         dim = dim[0]
+        if len(H1) == 0:
+            raise ValueError('provide at least 1 control amplitude')
+        elif len(H1) == 1:
+            if qutip_available:
+                if all(isinstance(Hi, qutip.Qobj) for Hi in H1[0]):
+                    H1 = [[Hi.data.todense() for Hi in H1[0]]]
+            H1 = np.atleast_2d(H1[0])
+        else:
+            if qutip_available:
+                if type(H1[0]) == qutip.Qobj:
+                    H1 = [Hi.data.todense() for Hi in H1]
+            H1 = np.atleast_2d(H1)
         amps = np.shape(H1)
         if len(amps) > 2:
-            amps = amps[2]
+            amps = amps[0]
+            H1 = np.swapaxes(H1,0,2)
         else:
             amps = 1
-
         self.dim = dim
         self.amps = amps
         if self._use_doubles:
@@ -148,7 +174,10 @@ class Parament:
             carr = np.complex64(carr)
             self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt),
                                                          np.uint(pts), np.uint(self.amps), output))
-        return np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
+        outputdata = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
+        if self._use_qutip:
+            outputdata = qutip.Qobj(outputdata,dims=self._qutip_envelope.dims)          
+        return outputdata
 
     def _getErrorMessage(self, code=None):
         if code is None:
