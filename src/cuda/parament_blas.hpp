@@ -130,6 +130,3 @@ cublasStatus_t cublasGaxpy(
        return cublasZaxpy(handle, n, alpha, x, incx, y, incy);
 }
 
-// AXPY Strided batched
-// Custom implementation since missing in the CUBLAS library
-// WIP: This will replace diagonal_add

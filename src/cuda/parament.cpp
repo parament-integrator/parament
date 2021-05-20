@@ -45,7 +45,9 @@ limitations under the License.
 
 
 
-
+/*
+ * Create Parment context and prepare GPU
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
     // todo (Pol): use `new` operator instead of `malloc`. Casting `malloc` is BAD.
@@ -177,6 +179,9 @@ static void freeWorkingMemory(Parament_Context<complex_t> *handle) {
     }
 }
 
+/*
+ * Destructor for the Parament context
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_destroy(Parament_Context<complex_t> *handle) {
     cudaError_t cudaError;
@@ -199,6 +204,9 @@ Parament_ErrorCode Parament_destroy(Parament_Context<complex_t> *handle) {
     return PARAMENT_STATUS_SUCCESS;
 }
 
+/*
+ * Upload the system Hamiltonians to the GPU. The routines also sets the quadrature settings used for the integration
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_setHamiltonian(
         Parament_Context<complex_t> *handle, complex_t *H0, complex_t *H1, unsigned int dim, unsigned int amps,
@@ -236,7 +244,6 @@ Parament_ErrorCode Parament_setHamiltonian(
         H1memory = dim * dim * amps * sizeof(complex_t);
     }
     
-
     // Allocate GPU memory
     if (cudaSuccess != cudaMalloc(&handle->H0, dim * dim * sizeof(complex_t))) {
         handle->lastError = PARAMENT_STATUS_DEVICE_ALLOC_FAILED;
@@ -367,6 +374,9 @@ error_cleanup:
     return handle->lastError;
 }
 
+/*
+ * Computes the Bessel coefficients for the integration
+ */
 template<typename complex_t, typename real_t>
 static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t> *handle, real_t dt) {
     // If enabled, automatically determine number of iterations
@@ -405,6 +415,10 @@ static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t
     return PARAMENT_STATUS_SUCCESS;
 }
 
+
+/*
+ * Transfer arrays of the control amplitudes to the GPU
+ */
 template<typename complex_t>
 static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, complex_t *carr, unsigned int pts, unsigned int amps) {
     // Allocate memory for c arrays if needed
@@ -466,8 +480,6 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
         }
     }
 
-    
-
     // Transfer c1
     cudaError_t error = cudaMemcpy(handle->c1, carr, amps * pts * sizeof(complex_t), cudaMemcpyHostToDevice);
     assert(error == cudaSuccess);
@@ -475,6 +487,9 @@ static Parament_ErrorCode equipropTransfer(Parament_Context<complex_t> *handle, 
     return PARAMENT_STATUS_SUCCESS;
 }
 
+/*
+ * Outlaying of all slice Hamiltonians / effective Hamiltonians for subsequent exponentiation
+ */
 template<typename complex_t>
 static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, unsigned int pts, unsigned int amps, double dt) {
 
@@ -507,15 +522,7 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
 
     if ((handle->quadrature_mode == PARAMENT_QUADRATURE_MIDPOINT) && (handle->enable_magnus == false)){
         // Kernel launch for midpoint
-        //PARAMENT_DEBUG("Hier kommt das alte Array");
-        //readback(handle->c1,pts*amps);
-
-        control_midpoint(handle->c1,handle->c2,amps,pts,handle->numSMs);
-
-        //PARAMENT_DEBUG("Hier kommt das neue Array");
-        //readback(handle->c2,(pts-1)*amps);
-
-        
+        control_midpoint(handle->c1,handle->c2,amps,pts,handle->numSMs);        
         expansion_array = handle->c2;
         expansion_amps = amps;
         expansion_pts = pts-1;
@@ -523,33 +530,19 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
 
     if ((handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON) && (handle->enable_magnus == false)){
         // Kernel launch for Simpson
-        // We need an odd number of coefficients
-        //PARAMENT_DEBUG("Hier kommt das alte Array");
-        //readback(handle->c1,pts*amps);
-
         control_simpson(handle->c1,handle->c2,amps,pts,handle->numSMs);
-
-        //PARAMENT_DEBUG("Hier kommt das neue Array");
-        //readback(handle->c2,(pts-1)/2*amps);
-
-        
         expansion_array = handle->c2;
         expansion_amps = amps;
         expansion_pts = (pts-1)/2;
     }
 
     if (handle->enable_magnus == true){
-
         control_magnus(handle->c1,handle->c2,amps,pts,dt, handle->numSMs);
-
         expansion_array = handle->c2;
         expansion_amps = 2*amps+((amps-1)*amps)/2;
         expansion_pts = (pts-1)/2;
 
     }
-
-    
-     
 
 
     error = cublasGgemm(handle->cublasHandle,
@@ -562,13 +555,15 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
         handle->X, dim*dim);
     if (error != CUBLAS_STATUS_SUCCESS) {
         return PARAMENT_STATUS_CUBLAS_FAILED;
-    }
-
-    
+    }  
 
     return PARAMENT_STATUS_SUCCESS;
 }
 
+
+/*
+ * Exponentiation of the time slices
+ */
 template<typename complex_t>
 static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle, double dt, unsigned int pts) {
     // define some short-form aliases...
@@ -610,7 +605,6 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
         // D0 = D0 + I*ak
         assert(cudaPeekAtLastError() == cudaSuccess);
         diagonal_add(handle->J[k], D0, pts, handle->numSMs, handle->dim);
-        //cudaDeviceSynchronize();
         assert(cudaPeekAtLastError() == cudaSuccess);
 
         // Next step
@@ -641,7 +635,6 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
        // D1 = D1 + I*ak'
        assert(cudaPeekAtLastError() == cudaSuccess);
        diagonal_add(handle->J[k], D1, pts, handle->numSMs, handle->dim);
-       //cudaDeviceSynchronize();
        assert(cudaPeekAtLastError() == cudaSuccess);
 
        if (k == handle->MMAX - 1){
@@ -652,6 +645,9 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
     return PARAMENT_STATUS_SUCCESS;
 }
 
+/*
+ * Multipy all matrix exponentials together
+ */
 template<typename complex_t>
 static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, unsigned int pts) {
     // define some short-form aliases...
@@ -694,7 +690,9 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
     return PARAMENT_STATUS_SUCCESS;
 }
 
-
+/*
+ * Look-up for norm threasholds for FP32
+ */
 int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
     PARAMENT_DEBUG("FP32 HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.032516793) { return 3; };
@@ -713,6 +711,9 @@ int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
     if (H_norm*dt <= 12.65570085) { return 29; } else {return -1;};
 }
 
+/*
+ * Look-up for norm threasholds for FP64
+ */
 int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
     PARAMENT_DEBUG("HNORM*DT = %f\n", H_norm*dt );
     if (H_norm*dt <= 0.000213616) { return 3; };
@@ -737,6 +738,9 @@ int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
     if (H_norm*dt <= 12.7584) { return 41; } else {return -1;};
 }
 
+/*
+ * Set Chebychev iterations manually
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_setIterationCyclesManually(Parament_Context<complex_t> *handle, unsigned int cycles) {
     handle->MMAX = cycles;
@@ -744,6 +748,9 @@ Parament_ErrorCode Parament_setIterationCyclesManually(Parament_Context<complex_
     return PARAMENT_STATUS_SUCCESS;
 }
 
+/*
+ * Enable dynmic Checbychev cycle selection
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t> *handle) {
     handle->MMAX = 11;
@@ -751,6 +758,9 @@ Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t>
     return PARAMENT_STATUS_SUCCESS;
 }
 
+/*
+ * Main integration routine. This routine performs all steps and is exported.
+ */
 template<typename complex_t>
 Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, double dt, unsigned int pts, unsigned int amps, complex_t *out) {
     PARAMENT_DEBUG("Equiprop C called");
@@ -798,6 +808,7 @@ Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, comple
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return PARAMENT_STATUS_SUCCESS;
 }
+
 
 template<typename complex_t>
 Parament_ErrorCode Parament_peekAtLastError(Parament_Context<complex_t> *handle) {

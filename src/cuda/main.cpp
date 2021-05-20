@@ -39,7 +39,6 @@ int main(int argc, const char* argv[]) {
     
     } 
 
-    // if (argv > 2) {}
 
     // Generate H0 & H1 matrices and c array
     cuComplex* hostH0 = (cuComplex*)malloc(TEST_DIM * TEST_DIM * sizeof(cuComplex));
@@ -73,13 +72,11 @@ int main(int argc, const char* argv[]) {
         cout << i << endl;
         Parament_equiprop(parament, hostc1, 0.1, TEST_PTS, 1, outputmat);
     }
-    //printcomplex(outputmat,TEST_DIM*TEST_DIM);
     cout << "Finished!" <<endl;
     free(hostH0);
     free(hostH1);
     free(hostc1);
     free(outputmat);
     
-   //cudaProfilerStop();
     return 0;
 }

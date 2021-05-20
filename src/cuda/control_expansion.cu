@@ -19,12 +19,15 @@ limitations under the License.
 #define NO_CUDA_STUBS
 #include "control_expansion.h"
 
+/*
+ * Kernel for Magnus expansion of coefficient arrays (FP32)
+ */
 // 3D thread block indexing
 __global__ void generate_magnus(cuComplex *coeffs_in, cuComplex *coeffs_out, int amps, int n, float dt)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;  // Timepoint index
     int j = blockIdx.y * blockDim.y + threadIdx.y;  // Amp index
-    int k = blockIdx.z * blockDim.z + threadIdx.z;  //Second amp index
+    int k = blockIdx.z * blockDim.z + threadIdx.z;  // Second amp index
     int len_new = (n-3)/2+1;
     cuComplex four = make_cuComplex(4,0);
     cuComplex six = make_cuComplex(6,0);
@@ -46,23 +49,6 @@ __global__ void generate_magnus(cuComplex *coeffs_in, cuComplex *coeffs_out, int
     
 
     }
-
-
-    /*
-    // Coefficient calculations involving only one control Hamiltonian
-    if (i < len_new && j < amps && k==0){
-
-        // Coefficient reduction for Simpson rule
-        int idx_new = i+j*len_new;
-        int idx_old = 2*i+n*j;
-        //coeff_out[idx_new] = 1/6*coeff_in[idx_old] + 4/6*coeff_in[idx_old+1] + 1/6*coeff_in[idx_old+2];
-        coeffs_out[idx_new] = cuCaddf(coeffs_in[idx_old], cuCmulf(four,coeffs_in[idx_old+1]));
-        coeffs_out[idx_new] = cuCaddf(coeffs_in[idx_new], coeffs_in[idx_old+2]);
-        coeffs_out[idx_new] = cuCdivf(coeffs_in[idx_new], six);
-
-    }
-    */
-
     
     // Coefficient calculations for pairwise commutators of control Hamiltonians
     if (i < len_new && j < k && k < amps){
@@ -73,19 +59,20 @@ __global__ void generate_magnus(cuComplex *coeffs_in, cuComplex *coeffs_out, int
         coeffs_out[idx_new_pair] = cuCmulf(coeffs_in[idx_old_amp1],coeffs_in[idx_old_amp2+2]);
         coeffs_out[idx_new_pair] = cuCsubf(coeffs_out[idx_new_pair],cuCmulf(coeffs_in[idx_old_amp1+2],coeffs_in[idx_old_amp2]));
         coeffs_out[idx_new_pair] = cuCmulf(coeffs_out[idx_new_pair],commiefactor);
-        
 
     }
     
 
 }
 
-
+/*
+ * Kernel for Magnus expansion of coefficient arrays (FP64)
+ */
 __global__ void generate_magnus_fp64(cuDoubleComplex *coeffs_in, cuDoubleComplex *coeffs_out, int amps, int n, float dt)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;  // Timepoint index
     int j = blockIdx.y * blockDim.y + threadIdx.y;  // Amp index
-    int k = blockIdx.z * blockDim.z + threadIdx.z;  //Second amp index
+    int k = blockIdx.z * blockDim.z + threadIdx.z;  // Second amp index
     int len_new = (n-3)/2+1;
     cuDoubleComplex four = make_cuDoubleComplex(4,0);
     cuDoubleComplex six = make_cuDoubleComplex(6,0);
@@ -107,7 +94,6 @@ __global__ void generate_magnus_fp64(cuDoubleComplex *coeffs_in, cuDoubleComplex
     
 
     }
-
     
     // Coefficient calculations for pairwise commutators of control Hamiltonians
     if (i < len_new && j < k && k < amps){
@@ -125,8 +111,9 @@ __global__ void generate_magnus_fp64(cuDoubleComplex *coeffs_in, cuDoubleComplex
 
 }
 
-
-
+/*
+ * Kernel for applying midpoint rule to coefficient arrays (FP32)
+ */
 // 2D thread block indexing
 __global__ void generate_midpoint(cuComplex *coeffs_in, cuComplex *coeffs_out, int amps, int n)
 {
@@ -140,6 +127,9 @@ __global__ void generate_midpoint(cuComplex *coeffs_in, cuComplex *coeffs_out, i
     }
 }
 
+/*
+ * Kernel for applying midpoint rule to coefficient arrays (FP64)
+ */
 // 2D thread block indexing
 __global__ void generate_midpoint_fp64(cuDoubleComplex *coeffs_in, cuDoubleComplex *coeffs_out, int amps, int n)
 {
@@ -153,6 +143,9 @@ __global__ void generate_midpoint_fp64(cuDoubleComplex *coeffs_in, cuDoubleCompl
     }
 }
 
+/*
+ * Kernel for applying Simpson's rule to coefficient arrays (FP32)
+ */
 // 2D thread block indexing
 __global__ void generate_simpson(cuComplex *coeffs_in, cuComplex *coeffs_out, int amps, int n)
 {
@@ -172,7 +165,9 @@ __global__ void generate_simpson(cuComplex *coeffs_in, cuComplex *coeffs_out, in
     }
 }
 
-
+/*
+ * Kernel for applying Simpson's rule to coefficient arrays (FP64)
+ */
 __global__ void generate_simpson_fp64(cuDoubleComplex *coeffs_in, cuDoubleComplex *coeffs_out, int amps, int n)
 {
     
@@ -195,8 +190,6 @@ __global__ void generate_simpson_fp64(cuDoubleComplex *coeffs_in, cuDoubleComple
 // ////////////////////////////////////////
 // HERE FUNCTIONS EXPOSED TO C/C++ FOLLOW
 // ///////////////////////////////////////
-
-
 void control_magnus(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int amps, unsigned int n, float dt, unsigned int numSMs)
 {
     dim3 threadsPerBlock(256/(amps*amps), amps,amps);
