@@ -30,5 +30,5 @@ goto :EOF
 
 
 :error
-echo Failed with error REM%errorlevel%.
+echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
