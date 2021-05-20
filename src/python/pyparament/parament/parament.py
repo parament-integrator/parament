@@ -197,11 +197,16 @@ class Parament:
         return outputdata
 
     def _getErrorMessage(self, code=None):
+        """
+        Query last status code from C.
+        """
         if code is None:
             code = self._lib.Parament_getLastError(self._handle)
         return self._lib.Parament_errorMessage(code).decode()
 
     def _checkError(self, error_code):
+        """Check for C errors and translate to human-readable messages
+        """
         if error_code == PARAMENT_STATUS_SUCCESS:
             return
         try:
