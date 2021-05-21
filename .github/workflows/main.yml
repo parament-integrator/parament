@@ -6,9 +6,7 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -27,9 +25,9 @@ jobs:
         with:
           cuda: '11.2.2'
       
-      - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+      - run: echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"
 
-      - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      - run: echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
 
       - run: nvcc -V
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
