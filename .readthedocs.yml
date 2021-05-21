@@ -4,6 +4,10 @@
 # Required
 version: 2
 
+build:
+  apt_packages:
+    - libclang-10-dev
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -11,8 +15,8 @@ sphinx:
 # Optionally build your docs in additional formats such as PDF
 formats: all
 
-# # Optionally set the version of Python and requirements required to build your docs
-# python:
-#   version: 3.7
-#   install:
-#     - requirements: docs/requirements.txt
+# Optionally set the version of Python and requirements required to build your docs
+python:
+  version: 3.7
+  install:
+    - requirements: docs/requirements.txt
