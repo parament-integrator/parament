@@ -30,11 +30,40 @@ jobs:
           echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
           nvcc -V
       
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Check-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a set of commands using the runners shell
       - name: Build parament
+        run: . ./tools/build.sh
+        
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: 3.9
+        
+      - name: Build pyparament
         run: |
-          . ./tools/build.sh
+          python -m venv parament_py
+          . ./parament_py/bin/activate
+          pip install -r ./src/python/requirements.txt
+          cd src
+          python setup.py bdist_wheel
+          python setup.py sdist
+          deactivate
+
+      # Upload the artifacts
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux-lib
+          path: |
+            build/parament.bin
+            build/libparament.so
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux-python
+          path: |
+            src/dist/*.whl
+            src/dist/parament-*.tar.gz
+
+
           
