@@ -1,3 +1,7 @@
+
+[![Documentation Status](https://readthedocs.org/projects/parament/badge/?version=latest)](https://parament.readthedocs.io/en/latest/?badge=latest)
+[![CI](https://github.com/parament-integrator/parament/actions/workflows/main.yml/badge.svg)](https://github.com/parament-integrator/parament/actions/workflows/main.yml)
+
 # Working title: GAME 
 **G**PU **A**ccelerated **M**atrix **E**xponentiation
 
