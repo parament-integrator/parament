@@ -13,6 +13,7 @@ buildCuda:win:
 
 buildCuda:linux:
   stage: build
+  allow_failure: true
   script:
     - "./tools/build.sh"
   artifacts:
