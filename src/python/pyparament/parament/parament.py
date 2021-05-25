@@ -115,6 +115,8 @@ class Parament:
                 H0 = H0.data.todense()
             else: 
                 self._use_qutip = False
+        else:
+            self._use_qutip = False
         H0 = np.atleast_2d(H0)
         if quadrature_mode == 'none':
             modesel = PARAMENT_QUADRATURE_NONE
