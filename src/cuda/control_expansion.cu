@@ -194,14 +194,18 @@ void control_magnus(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int amps
 {
     dim3 threadsPerBlock(256/(amps*amps), amps,amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_magnus<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n, dt);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
 
 void control_magnus(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, unsigned int amps, unsigned int n, float dt, unsigned int numSMs)
 {
     dim3 threadsPerBlock(256/(amps*amps), amps,amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_magnus_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n, dt);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
 
 
@@ -209,14 +213,18 @@ void control_midpoint(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int am
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_midpoint<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
 
 void control_midpoint(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, unsigned int amps, unsigned int n, unsigned int numSMs)
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks(n / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_midpoint_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
 
 
@@ -224,12 +232,16 @@ void control_simpson(cuComplex* coeff_in, cuComplex *coeff_out, unsigned int amp
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks((n-3)/2 / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_simpson<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
 
 void control_simpson(cuDoubleComplex* coeff_in, cuDoubleComplex *coeff_out, unsigned int amps, unsigned int n, unsigned int numSMs)
 {
     dim3 threadsPerBlock(256/amps, amps);
     dim3 numBlocks((n-3)/2 / threadsPerBlock.x+1, 1);
+    assert(cudaPeekAtLastError() == cudaSuccess);
     generate_simpson_fp64<<<numBlocks, threadsPerBlock>>>(coeff_in, coeff_out, amps, n);
+    assert(cudaPeekAtLastError() == cudaSuccess);
 }
