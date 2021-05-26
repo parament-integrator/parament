@@ -16,6 +16,7 @@ limitations under the License.
 #include <cublas_v2.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #define NO_CUDA_STUBS
 #include "control_expansion.h"
 
@@ -45,9 +46,6 @@ __global__ void generate_magnus(cuComplex *coeffs_in, cuComplex *coeffs_out, int
         int idx_comm = i+(j+amps)*len_new;
         coeffs_out[idx_comm] = cuCsubf(coeffs_in[2*i+j*n+2],coeffs_in[2*i+j*n]);
         coeffs_out[idx_comm] = cuCmulf(coeffs_out[idx_comm],commiefactor);
-        
-    
-
     }
     
     // Coefficient calculations for pairwise commutators of control Hamiltonians
