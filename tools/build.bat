@@ -15,7 +15,7 @@ REM =========================================================================
 
 SETLOCAL
 set sourceFiles=deviceinfo.c diagonal_add.cu main.cpp mathhelper.cpp parament.cpp printFuncs.cpp debugfuncs.cpp control_expansion.cu
-set nvccFlags=-lcublas
+set nvccFlags=-lcublas %*
 set outputDir=build
 
 md build

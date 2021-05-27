@@ -32,24 +32,27 @@ CUDA_SRC_FILES = (
     b"parament.cpp",
     b"printFuncs.cpp",
     b"debugfuncs.cpp",
-    b" control_expansion.cu",
+    b"control_expansion.cu",
 )
 NVCC_BIN = b"nvcc"
-NVCC_ARGS =[ 
+NVCC_ARGS = [
     b"-lcublas",
     b"-DPARAMENT_BUILD_DLL",
-    b"-DNDEBUG",  # disable assertions and debug messages
     b"--shared",
 ]
+NVCC_USER_ARGS = [os.environ.get("NVCC_ARGS")]
+if NVCC_USER_ARGS is [None]:
+    NVCC_USER_ARGS = [
+        b"-DNDEBUG",  # disable assertions and debug messages
+    ]
 
 
-def run_nvcc_win(build_dir: pathlib.Path, nvcc_user_args: str):
+def run_nvcc_win(build_dir: pathlib.Path):
     try:
-        nvcc_user_args = [] if nvcc_user_args is "" else [nvcc_user_args]
         nvcc_cmd = [
             NVCC_BIN,
             *NVCC_ARGS,
-            *nvcc_user_args,
+            *NVCC_USER_ARGS,
             b"-o", str(build_dir / "parament.dll").encode(),
             *CUDA_SRC_FILES]
         subprocess.run(nvcc_cmd, check=True)
@@ -57,12 +60,12 @@ def run_nvcc_win(build_dir: pathlib.Path, nvcc_user_args: str):
         raise RuntimeError("Failed to build CUDA code") from e
 
 
-def run_nvcc_linux(build_dir: pathlib.Path, nvcc_user_args: str):
+def run_nvcc_linux(build_dir: pathlib.Path):
     try:
         nvcc_cmd = [
             NVCC_BIN,
             *NVCC_ARGS,
-            nvcc_user_args,
+            *NVCC_USER_ARGS,
             b"--compiler-options -fPIC",
             b"-o", str(build_dir / "libparament.so").encode(),
             *CUDA_SRC_FILES
@@ -73,20 +76,19 @@ def run_nvcc_linux(build_dir: pathlib.Path, nvcc_user_args: str):
         raise RuntimeError("Failed to build CUDA code") from e
 
 
-def build_parament_cuda(build_dir: pathlib.Path, nvcc_user_args: str):
-    #
+def build_parament_cuda(build_dir: pathlib.Path):
     cwd = os.getcwd()
     build_dir = build_dir.absolute()  # make path absolute, we are about to change the cwd
     try:
         os.chdir(CUDA_SRC_DIR)
 
         if platform.system() == "Windows":
-            run_nvcc_win(build_dir, nvcc_user_args)
+            run_nvcc_win(build_dir)
             # remove EXP and LIB files, keep only DLL
             os.remove(str(build_dir / "parament.exp"))
             os.remove(str(build_dir / "parament.lib"))
         elif platform.system() == "Linux":
-            run_nvcc_linux(build_dir, nvcc_user_args)
+            run_nvcc_linux(build_dir)
         else:
             raise RuntimeError("Don't know how to build on " + platform.system())
     finally:
@@ -95,14 +97,6 @@ def build_parament_cuda(build_dir: pathlib.Path, nvcc_user_args: str):
 
 # Override build command
 class BuildCommand(distutils.command.build.build):
-    user_options = distutils.command.build.build.user_options + [
-        ('nvcc-args=', None, 'extra nvcc arguments'),
-    ]
-
-    def initialize_options(self):
-        super().initialize_options()
-        self.nvcc_args = ""
-
     def run(self):
         # Run the original build command
         distutils.command.build.build.run(self)
@@ -111,7 +105,7 @@ class BuildCommand(distutils.command.build.build):
             buildDir = pathlib.Path(self.build_lib) / "parament"
             if not os.path.exists(buildDir):
                 os.makedirs(buildDir)
-            build_parament_cuda(buildDir, self.nvcc_args)
+            build_parament_cuda(buildDir)
 
 
 # Override bdist_wheel command, to force the wheel to be platform specific.
