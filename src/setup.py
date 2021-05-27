@@ -40,8 +40,9 @@ NVCC_ARGS = [
     b"-DPARAMENT_BUILD_DLL",
     b"--shared",
 ]
-NVCC_USER_ARGS = [os.environ.get("NVCC_ARGS").encode()]
-if NVCC_USER_ARGS == [None]:
+if os.environ.get("NVCC_ARGS"):
+    NVCC_USER_ARGS = [os.environ.get("NVCC_ARGS").encode()]
+else:
     NVCC_USER_ARGS = [
         b"-DNDEBUG",  # disable assertions and debug messages
     ]
