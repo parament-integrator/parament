@@ -70,6 +70,7 @@ def run_nvcc_linux(build_dir: pathlib.Path):
             b"-o", str(build_dir / "libparament.so").encode(),
             *CUDA_SRC_FILES
         ]
+        print(nvcc_cmd)
         linux_command = b" ".join(nvcc_cmd).decode()
         subprocess.run(linux_command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
