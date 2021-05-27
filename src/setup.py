@@ -41,7 +41,7 @@ NVCC_ARGS = [
     b"--shared",
 ]
 NVCC_USER_ARGS = [os.environ.get("NVCC_ARGS")]
-if NVCC_USER_ARGS is [None]:
+if NVCC_USER_ARGS == [None]:
     NVCC_USER_ARGS = [
         b"-DNDEBUG",  # disable assertions and debug messages
     ]
