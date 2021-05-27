@@ -11,17 +11,17 @@ buildCuda:win:
       - build/parament.exe
       - build/parament.dll
 
-buildCuda:linux:
-  stage: build
-  allow_failure: true
-  script:
-    - "./tools/build.sh"
-  artifacts:
-    paths:
-      - build/parament.bin
-      - build/libparament.so
-  tags:
-    - linux
+#buildCuda:linux:
+#  stage: build
+#  allow_failure: true
+#  script:
+#    - "./tools/build.sh"
+#  artifacts:
+#    paths:
+#      - build/parament.bin
+#      - build/libparament.so
+#  tags:
+#    - linux
 
 buildDocs:
   stage: build
