@@ -19,12 +19,12 @@ import scipy.linalg
 
 
 def test_smoke():
-    GPURunner = parament.Parament()
+    gpu_runner = parament.Parament()
     H0 = np.array([[1, 0], [0, -1]])
     H1 = np.array([[0, 1], [1, 0]])
 
-    GPURunner.set_hamiltonian(H0, H1)
-    GPURunner.destroy()
+    gpu_runner.set_hamiltonian(H0, H1)
+    gpu_runner.destroy()
 
 
 def test_simple():
@@ -40,14 +40,14 @@ def test_simple():
 
     gpu_runner.set_hamiltonian(H0, H1)
 
-    output_propagator = gpu_runner.equiprop(np.zeros(1), dt)
+    output_propagator = gpu_runner.equiprop(dt, np.zeros(1))
     gpu_runner.destroy()
 
     print("Calculated: ")
     print(output_propagator)
 
     diff = expected_matrix_exponential - output_propagator
-    diff = diff / (np.finfo(np.float32).eps)
+    diff = diff / np.finfo(np.float32).eps
     print("Diff in units of eps")
     print(diff)
 

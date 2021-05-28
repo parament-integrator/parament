@@ -25,6 +25,6 @@ def expm_debug(m):
     carr = np.zeros(1)
     GPURunner = parament.Parament()
     GPURunner.set_hamiltonian(-m, m, use_magnus=False, quadrature_mode='none')
-    expm_GPU= GPURunner.equiprop(carr,dt)
+    expm_GPU= GPURunner.equiprop(dt, carr)
     GPURunner.destroy()
     return expm_GPU

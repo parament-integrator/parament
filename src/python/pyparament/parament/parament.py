@@ -52,7 +52,7 @@ class Parament:
     >>> H1 = np.array([[0, 1], [1, 0]])
     >>> dt = 1.0
     >>> gpu_runner.set_hamiltonian(H0, H1)
-    >>> gpu_runner.equiprop(np.zeros(1), dt)
+    >>> gpu_runner.equiprop(dt, np.zeros(1))
     array([[0.54030234-0.84147096j, 0.        +0.j        ],
        [0.        +0.j        , 0.54030234+0.84147096j]], dtype=complex64)
 
@@ -183,15 +183,27 @@ class Parament:
             ))
         logger.debug("Python setHamiltonian completed")
 
-    def equiprop(self, carr, dt):
+    def equiprop(self, dt, *carr):
         """Compute the propagator from the Hamiltionians.
+
+        The `carr` argument is variadic. In the case of multiple control fields, just pass one vector per control
+        Hamoltonian. For example, if `u1` and `u2` are the amplitudes for two Hamiltonians:
+
+        >>> equiprop(dt, u1, u2)
+
+        If instead you have a 2D array (where the first axis indexes the fields, and the second axis denotes time),
+        or a list/tuple of vectors, you can conveniently unpack it with the `*` operator. For instance, the above call
+        is equivalent to:
+
+        >>> carr = u1, u2
+        >>> equiprop(dt, *carr)
 
         Parameters
         ----------
-        carr: ndarrray
-            Array of the control field amplitudes.
         dt: float
             Time step.
+        *carr: ndarrray
+            Array of the control field amplitudes.
 
         Returns
         -------

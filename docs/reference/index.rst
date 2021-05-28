@@ -11,10 +11,11 @@ Functions
 ~~~~~~~~~
 
 .. autocmodule:: cuda/parament.h
-   :members: Parament_create, Parament_destroy, Parament_setHamiltonian, Parament_equiprop
+    :members: Parament_create, Parament_destroy, Parament_setHamiltonian, Parament_equiprop
+    :member-order: bysource
 
 .. autocmodule:: cuda/parament.h
-   :members: Parament_selectIterationCycles_fp32, Parament_setIterationCyclesManually, Parament_automaticIterationCycles
+    :members: Parament_selectIterationCycles_fp32, Parament_setIterationCyclesManually, Parament_automaticIterationCycles
 
 .. autocmodule:: cuda/parament.h
     :members: Parament_peekAtLastError, Parament_errorMessage
