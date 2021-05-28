@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Parament'
-copyright = '2020, Spin Physics & Imaging Lab, ETH Zurich'
+copyright = '2021, Spin Physics & Imaging Lab, ETH Zurich'
 author = 'Konstantin Herb & Pol Welter'
 
 # The full version, including alpha/beta/rc tags
@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx.ext.linkcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -98,6 +99,69 @@ autodoc_mock_imports = [
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 add_module_names = False
+
+# -- Github repo info -------------------------------------------------------------
+
+GITHUB_USER = "parament-integrator"
+GITHUB_REPO = "parament"
+GITHUB_BRANCH = "master"
+
+
+# -- configure linkcode extension -------------------------------------------------
+
+def linkcode_resolve(domain, info):
+    def get_line_no():
+        # try to find the file and line number, based on code from numpy:
+        # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
+        obj = sys.modules[info['module']]
+        for part in info['fullname'].split('.'):
+            obj = getattr(obj, part)
+        import inspect
+        source, lineno = inspect.getsourcelines(obj)
+        return lineno, lineno + len(source) - 1
+
+    if domain == 'py':
+        source_root = 'src/python/pyparament'
+        filename = info['module'].replace('.', '/')
+        ln_start, ln_end = get_line_no()
+        return f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{source_root}/" \
+               f"{filename}.py#L{ln_start}-L{ln_end}"
+
+    elif domain == 'c':
+        source_root = 'src/cuda/'
+        return None  # c autodoc does not provide the full name unfortunately...
+    else:
+        return None
+    if not info['module']:
+        return None
+
+
+
+
+# -- Configure pydata theme -------------------------------------------------------
+
+html_theme_options = {
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/parament-integrator/parament",
+            "icon": "fab fa-github-square",
+        },
+        # {
+        #     "name": "GitLab",
+        #     "url": "https://gitlab.ethz.ch/welterp/parament",
+        #     "icon": "fab fa-gitlab",
+        # },
+    ],
+    "use_edit_page_button": True,
+}
+
+html_context = {
+    "github_user": GITHUB_USER,
+    "github_repo": GITHUB_REPO,
+    "github_version": GITHUB_BRANCH,
+    "doc_path": "docs",
+}
 
 
 # -- Setup ------------------------------------------------------------------------
