@@ -122,6 +122,8 @@ def linkcode_resolve(domain, info):
 
     if domain == 'py':
         source_root = 'src/python/pyparament'
+        if not info['module']:
+            return None
         filename = info['module'].replace('.', '/')
         ln_start, ln_end = get_line_no()
         return f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{source_root}/" \
@@ -132,9 +134,6 @@ def linkcode_resolve(domain, info):
         return None  # c autodoc does not provide the full name unfortunately...
     else:
         return None
-    if not info['module']:
-        return None
-
 
 
 
