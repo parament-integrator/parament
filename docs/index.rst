@@ -18,7 +18,5 @@ Parament is open-source and is released under the Apache Licence.
 
     user/index
     reference/index
-    dev
-    glossary
 
 

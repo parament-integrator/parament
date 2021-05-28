@@ -28,7 +28,7 @@ def test_fp32_expm_scipy_random(dim=2):
     dt = 0.22285
     carr = np.zeros(1)
     gpu_runner = parament.Parament()
-    gpu_runner.setHamiltonian(-H0, H1, use_magnus=False, quadrature_mode='none')
+    gpu_runner.set_hamiltonian(-H0, H1, use_magnus=False, quadrature_mode='none')
 
     expm_GPU = gpu_runner.equiprop(carr, dt)
 

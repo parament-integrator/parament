@@ -23,7 +23,7 @@ def test_smoke():
     H0 = np.array([[1, 0], [0, -1]])
     H1 = np.array([[0, 1], [1, 0]])
 
-    GPURunner.setHamiltonian(H0, H1)
+    GPURunner.set_hamiltonian(H0, H1)
     GPURunner.destroy()
 
 
@@ -38,7 +38,7 @@ def test_simple():
     print("Expected: ")
     print(expected_matrix_exponential)
 
-    gpu_runner.setHamiltonian(H0, H1)
+    gpu_runner.set_hamiltonian(H0, H1)
 
     output_propagator = gpu_runner.equiprop(np.zeros(1), dt)
     gpu_runner.destroy()

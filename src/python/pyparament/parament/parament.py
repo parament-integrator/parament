@@ -28,16 +28,17 @@ logger.setLevel(logging.CRITICAL)
 # Import qutip if available
 try:
     import qutip
-    qutip_available = True                 
 except ImportError:
-    qutip_available = False
+    import parament.qutip_mock as qutip
+else:
+    logger.debug("Qutip support enabled")
 
 
 class Parament:
     """Create a new Parament context.
 
-    The context stores settings and state between function calls. Use :py:meth:`setHamiltonian` to load the Hamiltonians,
-    and then call :py:meth:`equiprop` to compute the propagator.
+    The context stores settings and state between function calls. Use :py:meth:`setHamiltonian` to load the
+    Hamiltonians, and then call :py:meth:`equiprop` to compute the propagator.
 
     Parameters
     ----------
@@ -50,14 +51,14 @@ class Parament:
     >>> H0 = np.array([[1, 0], [0, -1]])
     >>> H1 = np.array([[0, 1], [1, 0]])
     >>> dt = 1.0
-    >>> gpu_runner.setHamiltonian(H0, H1)
+    >>> gpu_runner.set_hamiltonian(H0, H1)
     >>> gpu_runner.equiprop(np.zeros(1), dt)
     array([[0.54030234-0.84147096j, 0.        +0.j        ],
        [0.        +0.j        , 0.54030234+0.84147096j]], dtype=complex64)
 
     See Also
     --------
-    :c:func:`Parament_create`: The underlying native function.
+    :c:func:`Parament_create`: The underlying core function.
     """
     def __init__(self, precision='fp32'):
         if precision not in ('fp32', 'fp64'):
@@ -67,101 +68,118 @@ class Parament:
         self._lib = parament.paramentlib.lib
         self._handle = ctypes.c_void_p()
         if self._use_doubles:            
-            self._checkError(self._lib.Parament_create_fp64(ctypes.byref(self._handle)))
+            self._check_error(self._lib.Parament_create_fp64(ctypes.byref(self._handle)))
         else:
-            self._checkError(self._lib.Parament_create(ctypes.byref(self._handle)))
+            self._check_error(self._lib.Parament_create(ctypes.byref(self._handle)))
         logger.debug('Created Parament context')
         self.dim = 0
         self.amps = 0
-        if qutip_available:
-            logger.debug("Qutip support enabled")
+        self._qutip_H0 = None
+        self._use_qutip = False
 
     def destroy(self):
-        """Destroy the context. Will implicitly be called when the object is garbage-collected."""
+        """Destroy the context. Will implicitly be called when the object is garbage-collected.
+
+        See Also
+        --------
+        :c:func:`Parament_destroy`: The underlying core function.
+        """
         logger.debug('Destroying Parament context')
         if self._use_doubles:
-            self._checkError(self._lib.Parament_destroy_fp64(self._handle))
+            self._check_error(self._lib.Parament_destroy_fp64(self._handle))
         else:
-            self._checkError(self._lib.Parament_destroy(self._handle))
+            self._check_error(self._lib.Parament_destroy(self._handle))
         self._handle = None
     
     def __del__(self):
         if self._handle is not None:
             self.destroy()
 
-    def setHamiltonian(self, H0: np.ndarray, *H1, use_magnus=False, quadrature_mode='none'):
+    def set_hamiltonian(self, H0, *H1, use_magnus=False, quadrature_mode='none'):
         """Load the hamiltonians.
+
+        The drift Hamiltonian `H0` can bei either a numpy `ndarray` or a qutip object. In the latter case, subsequent
+        calls to :func:`equiprop` will also return a qutip object.
+
+        The parameter `H1` is variadic, i.e. you can pass multiple matrices:
+
+        >>> Parament.set_hamiltonian(H0, H1, H2)
+
+        If you have a list (or tuple) of the control Hamiltonians, pass them like so:
+
+        >>> H_control = (H1, H2)
+        >>> Parament.set_hamiltonian(H0, *H_control)
+
+        This even works if `H_control` is not a tuple or a list, but a single 3D `ndarray`, where the first axis
+        enumerates the hamiltonians.
+
+        Note that because `H1` is variadic, any following arguments (`use_use_magnus` and `quadrature_mode`) can only be
+        passed by keyword.
 
         Parameters
         ----------
-        H0 : ndarray
+        H0 : ndarray or qutip object
             Drift Hamiltionian.
-        *H1 : ndarray
+        *H1 : ndarray, qutip object or list of either one
             Interaction Hamiltonians.
         use_magnus : bool
             Enable or disable the 1st order Magnus expansion. When ``true``, pass 'simpson' as `quadrature_mode`.
         quadrature_mode : {'none', 'midpoint', 'simpson'}
             The quadrature rule used for interpolating the control amplitudes.
 
-
         See Also
         --------
-        :c:func:`Parament_setHamiltonian`: The underlying native function.
+        :c:func:`Parament_setHamiltonian`: The underlying core function.
         """
-        if qutip_available:
-            if type(H0) == qutip.Qobj:
-                self._use_qutip = True
-                self._qutip_envelope = H0
-                H0 = H0.data.todense()
-            else: 
-                self._use_qutip = False
+        if isinstance(H0, qutip.Qobj):
+            self._use_qutip = True
+            self._qutip_H0 = H0
+            H0 = H0.data.todense()
         else:
             self._use_qutip = False
         H0 = np.atleast_2d(H0)
+
         if quadrature_mode == 'none':
-            modesel = PARAMENT_QUADRATURE_NONE
+            mode_sel = PARAMENT_QUADRATURE_NONE
         elif quadrature_mode == 'midpoint':
-            modesel = PARAMENT_QUADRATURE_MIDPOINT
+            mode_sel = PARAMENT_QUADRATURE_MIDPOINT
         elif quadrature_mode == 'simpson':
-            modesel = PARAMENT_QUADRATURE_SIMPSON
+            mode_sel = PARAMENT_QUADRATURE_SIMPSON
         else:
             raise ValueError('unknown quadrature mode selected')
+
         dim = np.shape(H0)
         dim = dim[0]
         if len(H1) == 0:
             raise ValueError('provide at least 1 control amplitude')
-        elif len(H1) == 1:
-            if qutip_available:
-                if all(isinstance(Hi, qutip.Qobj) for Hi in H1[0]):
-                    H1 = [[Hi.data.todense() for Hi in H1[0]]]
-            H1 = np.atleast_2d(H1[0])
         else:
-            if qutip_available:
-                if type(H1[0]) == qutip.Qobj:
-                    H1 = [Hi.data.todense() for Hi in H1]
+            # convert qutip objects into dense ndarrays
+            H1 = [
+                Hi.data.todense() if isinstance(Hi, qutip.Qobj) else Hi
+                for Hi in H1
+            ]
             H1 = np.atleast_2d(H1)
         amps = np.shape(H1)
         if len(amps) > 2:
             amps = amps[0]
-            H1 = np.swapaxes(H1,0,2)
+            H1 = np.swapaxes(H1, 0, 2)
         else:
             amps = 1
         self.dim = dim
         self.amps = amps
         if self._use_doubles:
-            self._checkError(self._lib.Parament_setHamiltonian_fp64(
+            self._check_error(self._lib.Parament_setHamiltonian_fp64(
                 self._handle,
                 np.complex128(np.asfortranarray(H0)),
                 np.complex128(np.asfortranarray(H1)),
-                dim, amps, use_magnus, modesel
+                dim, amps, use_magnus, mode_sel
             ))
         else:
-
-            self._checkError(self._lib.Parament_setHamiltonian(
+            self._check_error(self._lib.Parament_setHamiltonian(
                 self._handle,
                 np.complex64(np.asfortranarray(H0)),
                 np.complex64(np.asfortranarray(H1)),
-                dim, amps, use_magnus, modesel
+                dim, amps, use_magnus, mode_sel
             ))
         logger.debug("Python setHamiltonian completed")
 
@@ -180,25 +198,29 @@ class Parament:
         ndarray
             The computed propagator
 
+        See Also
+        --------
+        :c:func:`Parament_equiprop`: The underlying core function.
+
         """
         logger.debug("EQUIPROP PYTHON CALLED")
         pts = np.shape(carr)[0]
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)
-            self._checkError(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt),
-                                                              np.uint(pts), np.uint(self.amps), output))
+            self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt),
+                                                               np.uint(pts), np.uint(self.amps), output))
         else:
             output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
             carr = np.complex64(carr)
-            self._checkError(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt),
-                                                         np.uint(pts), np.uint(self.amps), output))
-        outputdata = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
+            self._check_error(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt),
+                                                          np.uint(pts), np.uint(self.amps), output))
+        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
         if self._use_qutip:
-            outputdata = qutip.Qobj(outputdata,dims=self._qutip_envelope.dims)          
-        return outputdata
+            output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)
+        return output_data
 
-    def _getErrorMessage(self, code=None):
+    def _get_error_message(self, code=None):
         """
         Query last status code from C.
         """
@@ -206,13 +228,13 @@ class Parament:
             code = self._lib.Parament_getLastError(self._handle)
         return self._lib.Parament_errorMessage(code).decode()
 
-    def _checkError(self, error_code):
+    def _check_error(self, error_code):
         """Check for C errors and translate to human-readable messages
         """
         if error_code == PARAMENT_STATUS_SUCCESS:
             return
         try:
-            exceptionClass = {
+            exception_class = {
                 PARAMENT_STATUS_HOST_ALLOC_FAILED: MemoryError,
                 PARAMENT_STATUS_DEVICE_ALLOC_FAILED: MemoryError,
                 PARAMENT_STATUS_CUBLAS_INIT_FAILED: RuntimeError,
@@ -226,8 +248,9 @@ class Parament:
         except KeyError as e:
             raise AssertionError('Unknown error code ') from e
 
-        message = self._getErrorMessage(error_code)
-        raise exceptionClass(f"Error code {error_code}: {message}")
+        message = self._get_error_message(error_code)
+        raise exception_class(f"Error code {error_code}: {message}")
+
 
 def device_info():
     """Print information about the available CUDA resources to stdout

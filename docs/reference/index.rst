@@ -3,6 +3,8 @@
 API Reference
 #############
 
+This part of the documentation lists all the functions provided by Parament.
+
 C API
 -----
 Functions

@@ -238,8 +238,10 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  * -------
  * :c:enum:`Parament_ErrorCode`
  *     - :c:enumerator:`PARAMENT_STATUS_SUCCESS` on success.
- *     - :c:enumerator:`PARAMENT_STATUS_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see :c:func:`Parament_setHamiltonian`).
- *     - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence would require an excessive number of iterations. Reduce the time step `dt`, or see XXXXX.
+ *     - :c:enumerator:`PARAMENT_STATUS_NO_HAMILTONIAN` when no Hamiltonian has been loaded (see
+ *       :c:func:`Parament_setHamiltonian`).
+ *     - :c:enumerator:`PARAMENT_STATUS_SELECT_SMALLER_DT` when automatic iteration count is enabled, and convergence
+ *       would require an excessive number of iterations. Reduce the time step `dt`.
  *     - :c:enumerator:`PARAMENT_STATUS_DEVICE_ALLOC_FAILED` when allocation of memory on the accelerator device failed.
  *     - :c:enumerator:`PARAMENT_STATUS_CUBLAS_FAILED` when an underlying cuBLAS operation failed.
  *
