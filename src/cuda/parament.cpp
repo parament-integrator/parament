@@ -111,7 +111,7 @@ Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
         goto error_cleanup3;
     }
     PARAMENT_DEBUG("created Parament context");
-    PARAMENT_DEBUG(typeid(complex_t).name());
+    PARAMENT_DEBUG("%s", typeid(complex_t).name());
     handle->lastError = PARAMENT_STATUS_SUCCESS;
     return handle->lastError;
 
