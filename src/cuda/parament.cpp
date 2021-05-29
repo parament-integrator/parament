@@ -544,6 +544,10 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
 
     }
 
+    //readback(expansion_array,expansion_amps*expansion_pts);
+    //readback(handle->H0,dim*dim);
+    //readback(handle->H1,dim*dim*expansion_amps);
+
 
     error = cublasGgemm(handle->cublasHandle,
         CUBLAS_OP_N, CUBLAS_OP_T,
@@ -641,6 +645,7 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
            ptr_accumulate = &handle->mone;
        }
     }
+    //readback(D1,dim*dim*pts);
     // D1 contains now the matrix exponentials
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -665,7 +670,7 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
         remain_pts = remain_pts/2;
 
         error = cublasGgemmStridedBatched(handle->cublasHandle,
-            CUBLAS_OP_N, CUBLAS_OP_T,
+            CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
             &handle->one,
             D1          , dim, dim*dim*2,
