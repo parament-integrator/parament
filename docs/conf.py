@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Parament'
-copyright = '2021, Spin Physics & Imaging Lab, ETH Zurich'
+copyright = '2021, Konstantin Herb & Pol Welter'
 author = 'Konstantin Herb & Pol Welter'
 
 # The full version, including alpha/beta/rc tags

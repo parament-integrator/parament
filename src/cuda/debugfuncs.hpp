@@ -13,24 +13,13 @@ limitations under the License.
 ==============================================================================*/
 
 
-#ifndef DEBUG_H_
-#define DEBUG_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <cublas_v2.h>
+#include <stdlib.h>
+#include <iostream>
+#include "printFuncs.hpp"
 
-#ifndef NO_CUDA_STUBS
-typedef struct cuComplex cuComplex;
-#endif  // NO_CUDA_STUBS
-
-
-void readback(cuComplex *test, unsigned int dim);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // DEBUG_H_
+void readback(cuComplex *test, int dim);
+void readback(cuDoubleComplex *test, int dim);
 
 

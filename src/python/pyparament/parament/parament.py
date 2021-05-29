@@ -216,7 +216,7 @@ class Parament:
 
         """
         logger.debug("EQUIPROP PYTHON CALLED")
-        pts = np.shape(carr)[0]
+        pts = np.shape(carr[0])[0]
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)

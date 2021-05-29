@@ -14,25 +14,41 @@ limitations under the License.
 
 
 #include <cublas_v2.h>
+#include <cuda_runtime.h>
 #include <stdlib.h>
 #include <iostream>
+#include "printFuncs.hpp"
 
-#define NO_CUDA_STUBS
 
-#include "debugfuncs.h"
+#include "debugfuncs.hpp"
 
-template<typename complex_t>
-void readback(complex_t *test, unsigned int dim){
-    int len = dim * sizeof(complex_t);
-    complex_t* hostprobe = (complex_t *)malloc(len);
+void readback(cuComplex *test, int dim){
+    int len = dim * sizeof(cuComplex);
+    cuComplex* hostprobe = (cuComplex *)malloc(len);
+    printf("--------------\n");
+
+    printf("Readback of 0x%p\n", test);
+     
+    cudaMemcpy(hostprobe, test, dim * sizeof(cuComplex), cudaMemcpyDeviceToHost);
+    
+    printf("Array\n");
+    printcomplex(hostprobe, dim);
+    printf("--------------\n");
+    
+}
+
+void readback(cuDoubleComplex *test, int dim){
+    int len = dim * sizeof(cuDoubleComplex);
+    cuDoubleComplex* hostprobe = (cuDoubleComplex *)malloc(len);
     printf("--------------\n");
 
     printf("Readback of 0x%p\n", test);
     
-    cudaMemcpy(hostprobe, test, dim * sizeof(complex_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(hostprobe, test, dim * sizeof(cuDoubleComplex), cudaMemcpyDeviceToHost);
     printf("Array\n");
     printcomplex(hostprobe, dim);
     printf("--------------\n");
     
     free(hostprobe);
+    
 }

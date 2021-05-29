@@ -20,9 +20,9 @@ limitations under the License.
 #include "parament_context.hpp"
 #include "diagonal_add.h"
 #include "mathhelper.h"
-#include "debugfuncs.h"
 #include "control_expansion.h"
 #include "parament_blas.hpp"
+#include "debugfuncs.hpp"
 
 #define ENDLINE "\n"
 
@@ -653,6 +653,8 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
     // define some short-form aliases...
     const unsigned int dim = handle->dim;
     complex_t *const D1 = handle->D1;
+
+    //readback(D1,dim*dim*pts);
 
     cublasStatus_t error;
 

@@ -19,7 +19,7 @@ limitations under the License.
 #include <cublas_v2.h>
 #define NO_CUDA_STUBS
 #include "parament.h"
-#include "debugfuncs.h"
+#include "debugfuncs.hpp"
 
 using namespace std;
 
