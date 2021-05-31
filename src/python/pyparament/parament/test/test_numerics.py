@@ -97,17 +97,11 @@ def test_fp64_expm_scipy_random(dim):
     assert error < error_threshold
 
 
-def test_fp32_multi_fields():
-    dtype_base = np.complex128
-
-    ox = np.array([[0, 1], [1, 0]], dtype=dtype_base)
-    oy = np.array([[0, -1j], [1j, 0]], dtype=dtype_base)
-    oz = np.array([[1, 0], [0, -1]], dtype=dtype_base)
-    w0 = 1.0
-    w1 = 0.1
-    H0 = w0 / 2 * oz
-    H1 = w1 / 2 * ox
-    H2 = w1 / 2 * oy
+@pytest.mark.parametrize("dim", [2, 16])
+def test_fp32_multi_fields(dim):
+    H0, H1 = random_hamiltonians(dim)
+    dt = 0.01
+    H2 = H0[:, :]
 
     carr1 = np.array([0.1, 0.2])
     carr2 = np.array([0.3, 0.4])
@@ -116,14 +110,11 @@ def test_fp32_multi_fields():
         context.set_hamiltonian(H0, H1, H2, use_magnus=False, quadrature_mode='none')
         propagator = context.equiprop(dt, carr1, carr2)
 
-    U = np.eye(2, dtype=np.complex128)
+    reference = scipy.linalg.expm(-1j*dt*(H0 + carr1*H1 + carr2*H2))
+
+    reference = np.eye(2, dtype=np.complex128)
     for i in range(len(carr1)):
         X = H0 + carr1[i] * H1 + carr2[i] * H2
         G = -1j * X * dt
-        print(X)
-
-        print("------------")
-        print(scipy.linalg.expm(G))
-        U = scipy.linalg.expm(G) @ U
-        print("##############")
-    assert np.linalg.norm(U - propagator) < 1e-6
+        reference = scipy.linalg.expm(G) @ reference
+    assert np.linalg.norm(reference - propagator) < 1e-6
