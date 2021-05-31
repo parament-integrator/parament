@@ -11,7 +11,11 @@ Parament is open-source and is released under the Apache Licence.
 
 ## Documentation
 
-The official documentation of Parament is [available here](https://parament.readthedocs.io/en/latest/).
+The official documentation of Parament is [available on Read The Docs](https://parament.readthedocs.io/en/latest/).
+
+## Try it out
+
+You can [try Parament](Insert link here) for free, in the cloud, via to Google Colab.
 
 ## Installation
 
@@ -63,3 +67,24 @@ NVCC_ARGS="-arch=compute_37"
 pip install git+https://github.com/parament-integrator/parament#subdirectory=src
 ```
 
+After you have installed pyparament, you can run the test suite (requires pytest to be installed).
+
+```
+pytest --pyargs parament
+```
+
+## Source tree structure
+
+This is a rough overview of the most important files and folders in this repository
+```bash
+├── _docs                       The source code for the documentation.
+├── _src                        The root of the parament source.
+│   ├── _cuda                   CPP source code.
+│   └── _python                 Source code of Python wrapper.
+│       └── _test               Built-in test-suite. See above.
+└── _tools                      Various scripts, mainly related to building.
+    └── build.bat               Build script for Windows. See above.
+    └── build.sh                Build script for Linux. See above.
+```
+
+Various other scripts in `/tools` are mostly used in our internal automated build system.
