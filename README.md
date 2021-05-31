@@ -75,7 +75,7 @@ pytest --pyargs parament
 
 ## Source tree structure
 
-This is a rough overview of the most important files and folders in this repository
+This is a rough overview of the most important files and folders in this repository.
 ```bash
 ├── _docs                       The source code for the documentation.
 ├── _src                        The root of the parament source.
