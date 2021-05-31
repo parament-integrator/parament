@@ -15,6 +15,7 @@
 
 import logging
 import ctypes
+from functools import wraps
 import numpy as np
 
 from .constants import *
@@ -32,6 +33,16 @@ except ImportError:
     import parament.qutip_mock as qutip
 else:
     logger.debug("Qutip support enabled")
+
+
+def _must_be_alive(f):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if self._handle is None:
+            raise RuntimeError("Attempting to use a context that has been destroyed")
+        return f(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Parament:
@@ -56,6 +67,20 @@ class Parament:
     array([[0.54030234-0.84147096j, 0.        +0.j        ],
        [0.        +0.j        , 0.54030234+0.84147096j]], dtype=complex64)
 
+    To release the resources allocated by the context, call the :meth:`destroy()` method. This happens automatically if
+    the context object is garbage collected by the interpreter. Good practice nevertheless mandates proper and explicit
+    lif cycle management.
+
+    If the context is only to be short lived, the recommended way is to use it as a context manager.
+
+    >>> with parament.Parament() as gpu_runner:
+    ...     gpu_runner.set_hamiltonian(H0, H1)
+    ...     gpu_runner.equiprop(dt, np.zeros(1))
+    array([[0.54030234-0.84147096j, 0.        +0.j        ],
+       [0.        +0.j        , 0.54030234+0.84147096j]], dtype=complex64)
+
+    The ``with`` statement guarantees that the context is properly destroyed, even in the event of an exception.
+
     See Also
     --------
     :c:func:`Parament_create`: The underlying core function.
@@ -77,6 +102,7 @@ class Parament:
         self._qutip_H0 = None
         self._use_qutip = False
 
+    @_must_be_alive
     def destroy(self):
         """Destroy the context. Will implicitly be called when the object is garbage-collected.
 
@@ -95,6 +121,7 @@ class Parament:
         if self._handle is not None:
             self.destroy()
 
+    @_must_be_alive
     def set_hamiltonian(self, H0, *H1, use_magnus=False, quadrature_mode='none'):
         """Load the hamiltonians.
 
@@ -131,6 +158,7 @@ class Parament:
         --------
         :c:func:`Parament_setHamiltonian`: The underlying core function.
         """
+
         if isinstance(H0, qutip.Qobj):
             self._use_qutip = True
             self._qutip_H0 = H0
@@ -183,6 +211,7 @@ class Parament:
             ))
         logger.debug("Python setHamiltonian completed")
 
+    @_must_be_alive
     def equiprop(self, dt, *carr):
         """Compute the propagator from the Hamiltionians.
 
@@ -232,6 +261,7 @@ class Parament:
             output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)
         return output_data
 
+    @_must_be_alive
     def _get_error_message(self, code=None):
         """
         Query last status code from C.
@@ -262,6 +292,12 @@ class Parament:
 
         message = self._get_error_message(error_code)
         raise exception_class(f"Error code {error_code}: {message}")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.destroy()
 
 
 def device_info():

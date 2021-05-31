@@ -20,11 +20,14 @@ import parament.paramentlib
 import parament.parament as parament
 
 
-def expm_debug(m):
-    dt = -1
-    carr = np.zeros(1)
-    GPURunner = parament.Parament()
-    GPURunner.set_hamiltonian(-m, m, use_magnus=False, quadrature_mode='none')
-    expm_GPU= GPURunner.equiprop(dt, carr)
-    GPURunner.destroy()
-    return expm_GPU
+def expm(m):
+    """Compute the exponential of the matrix `m`.
+
+    Only works for matrices with small norms.
+    """
+    dt = 1.0
+    gpu_runner = parament.Parament()
+    gpu_runner.set_hamiltonian(1j * m, m, use_magnus=False, quadrature_mode='none')
+    expm_gpu = gpu_runner.equiprop(dt, np.zeros(1))
+    gpu_runner.destroy()
+    return expm_gpu

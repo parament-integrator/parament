@@ -840,6 +840,8 @@ const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
         return "Timestep too large";
     case PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION:
         return "Invalid quadrature selection";
+    case PARAMENT_STATUS_NO_HAMILTONIAN:
+        return "No hamiltonian set";
     default:
         return "Unknown error code";
     }
