@@ -249,14 +249,14 @@ class Parament:
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)
-            self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.asfortranarray(carr), np.double(dt),
+            self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr,order='C'), np.double(dt),
                                                                np.uint(pts), np.uint(self.amps), output))
         else:
             output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
             carr = np.complex64(carr)
-            self._check_error(self._lib.Parament_equiprop(self._handle, np.asfortranarray(carr), np.double(dt),
+            self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr,order='C'), np.double(dt),
                                                           np.uint(pts), np.uint(self.amps), output))
-        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)).T)
+        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)))
         if self._use_qutip:
             output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)
         return output_data
