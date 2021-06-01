@@ -177,7 +177,9 @@ LIBSPEC Parament_ErrorCode Parament_create(struct Parament_Context_f32 **handle_
 LIBSPEC Parament_ErrorCode Parament_destroy(struct Parament_Context_f32 *handle);
 
 /**
- * Load a Hamiltonian.
+ * Load the drift and control Hamiltonians.
+ *
+ * **TODO**: specifiy ordering of H0, H1
  *
  * Parameters
  * ----------
@@ -220,6 +222,13 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
 /**
  * Compute the propagator from the Hamiltionians.
  *
+ * The control fields waveforms are specified via the parameter `carr`. This must be an array of length `pts*amps`,
+ * laid out in memory as a concatenation of `amps` arrays with length `pts` each.
+ *
+ * The number of control fields `amps` must not exceed the value previously set before with
+ * :c:func:`Parament_setHamiltonian`, otherwise behaviour is undefined.
+ * It may be less, in which case the extra Hamiltonians are assumed to have zero amplitude.
+ *
  * Parameters
  * ----------
  * context
@@ -227,11 +236,11 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  * carr
  *     Array of the control field amplitudes.
  * dt
- *     Time step.
+ *     Duration of a time step.
  * pts
- *     Number of entries per single control vector in `carr`.
+ *     Number of time steps.
  * amps
- *     Number of control Hamiltonians
+ *     Number of control Hamiltonians.
  * out
  *     The returned propagator.
  * Returns
@@ -249,7 +258,8 @@ LIBSPEC Parament_ErrorCode Parament_setHamiltonian(struct Parament_Context_f32 *
  * --------
  * :c:func:`Parament_equiprop_fp64`: The double precision variant
  */
- LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, double dt, unsigned int pts, unsigned int amps, cuComplex *out);
+LIBSPEC Parament_ErrorCode Parament_equiprop(struct Parament_Context_f32 *handle, cuComplex *carr, double dt,
+    unsigned int pts, unsigned int amps, cuComplex *out);
 
 
 /**

@@ -32,7 +32,7 @@ def test_use_after_destruction():
 
 def test_propagate_no_hamiltonian(context: parament.Parament):
     with pytest.raises(RuntimeError, match='No hamiltonian set'):
-        context.equiprop(0.1, np.ones(3))
+        context.equiprop(1.0)
 
 
 def test_invalid_quadrature_selection(context: parament.Parament):
@@ -40,3 +40,15 @@ def test_invalid_quadrature_selection(context: parament.Parament):
         context.set_hamiltonian(np.eye(2), np.eye(2), use_magnus=True, quadrature_mode='none')
     with pytest.raises(ValueError, match='Invalid quadrature selection'):
         context.set_hamiltonian(np.eye(2), np.eye(2), use_magnus=True, quadrature_mode='midpoint')
+
+
+def test_propagate_unset_amplitudes(context: parament.Parament):
+    context.set_hamiltonian(np.eye(2), np.eye(2))
+    with pytest.raises(ValueError, match='Got 2 amplitude arrays, but there are only 1 Hamiltonians.'):
+        context.equiprop(1.0, np.zeros(4), np.zeros(4))
+
+
+def test_propagate_unequal_amplitude_size(context: parament.Parament):
+    context.set_hamiltonian(np.eye(2), np.eye(2), np.eye(2))
+    with pytest.raises(ValueError, match='All amplitude arrays must have the same length.'):
+        context.equiprop(1.0, np.zeros(4), np.zeros(5))

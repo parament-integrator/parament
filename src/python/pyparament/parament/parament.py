@@ -97,8 +97,8 @@ class Parament:
         else:
             self._check_error(self._lib.Parament_create(ctypes.byref(self._handle)))
         logger.debug('Created Parament context')
-        self.dim = 0
-        self.amps = 0
+        self.dim = -1
+        self.amps = -1
         self._qutip_H0 = None
         self._use_qutip = False
 
@@ -245,17 +245,31 @@ class Parament:
 
         """
         logger.debug("EQUIPROP PYTHON CALLED")
+
+        if self.amps < 0:
+            # This error is also caught by paramentlib. We catch it here, otherwise it would get confused for a
+            # excessive number of control amplitudes below.
+            raise RuntimeError("No hamiltonian set")
+
+        amps = len(carr)
+        if len(carr) > self.amps:
+            raise ValueError(f'Got {len(carr)} amplitude arrays, but there are only {self.amps} Hamiltonians.')
+
         pts = np.shape(carr[0])[0]
+        if any(np.shape(carri) != (pts,) for carri in carr):
+            raise ValueError("All amplitude arrays must have the same length.")
+
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)
             self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr, order='C'), np.double(dt),
-                                                               np.uint(pts), np.uint(self.amps), output))
+                                                               np.uint(pts), np.uint(amps), output))
         else:
             output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
             carr = np.complex64(carr)
-            self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr, order='C'), np.double(dt),
-                                                          np.uint(pts), np.uint(self.amps), output))
+            print(np.float(dt))
+            self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr, order='C'), np.float(dt),
+                                                          np.uint(pts), np.uint(amps), output))
         output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim))).T
         if self._use_qutip:
             output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)

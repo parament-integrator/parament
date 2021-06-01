@@ -762,14 +762,15 @@ Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t>
  * Main integration routine. This routine performs all steps and is exported.
  */
 template<typename complex_t>
-Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, double dt, unsigned int pts, unsigned int amps, complex_t *out) {
+Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, complex_t *carr, double dt, unsigned int pts,
+        unsigned int amps, complex_t *out) {
     PARAMENT_DEBUG("Equiprop C called");
     if (handle->H0 == NULL) {
         handle->lastError = PARAMENT_STATUS_NO_HAMILTONIAN;
         return handle->lastError;
     }
 
-    if ((handle->enable_magnus == true) || (handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON)){
+    if ((handle->enable_magnus == true) || (handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON)) {
         dt = 2*dt;
     }
 
@@ -832,7 +833,7 @@ const char *Parament_errorMessage(Parament_ErrorCode errorCode) {
     case PARAMENT_STATUS_SELECT_SMALLER_DT:
         return "Timestep too large";
     case PARAMENT_STATUS_INVALID_QUADRATURE_SELECTION:
-        return "Invalid quadrature selection";
+        return "Invalid quadrature selection.";
     case PARAMENT_STATUS_NO_HAMILTONIAN:
         return "No hamiltonian set";
     default:
