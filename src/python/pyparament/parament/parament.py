@@ -198,15 +198,15 @@ class Parament:
         if self._use_doubles:
             self._check_error(self._lib.Parament_setHamiltonian_fp64(
                 self._handle,
-                np.complex128(np.asfortranarray(H0)),
-                np.complex128(np.asfortranarray(H1)),
+                np.complex128(np.ravel(H0, 'F')),
+                np.complex128(np.ravel(H1, 'F')),
                 dim, amps, use_magnus, mode_sel
             ))
         else:
             self._check_error(self._lib.Parament_setHamiltonian(
                 self._handle,
-                np.complex64(np.asfortranarray(H0)),
-                np.complex64(np.asfortranarray(H1)),
+                np.complex64(np.ravel(H0, 'F')),
+                np.complex64(np.ravel(H1, 'F')),
                 dim, amps, use_magnus, mode_sel
             ))
         logger.debug("Python setHamiltonian completed")
@@ -249,14 +249,14 @@ class Parament:
         if self._use_doubles:
             output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
             carr = np.complex128(carr)
-            self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr,order='C'), np.double(dt),
+            self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr, order='C'), np.double(dt),
                                                                np.uint(pts), np.uint(self.amps), output))
         else:
             output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
             carr = np.complex64(carr)
-            self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr,order='C'), np.double(dt),
+            self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr, order='C'), np.double(dt),
                                                           np.uint(pts), np.uint(self.amps), output))
-        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)))
+        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim))).T
         if self._use_qutip:
             output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)
         return output_data

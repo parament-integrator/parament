@@ -12,6 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#ifndef PARAMENT_BLAS_H_
+#define PARAMENT_BLAS_H_
 
 // GEMM Stided batched
 cublasStatus_t cublasGgemmStridedBatched(
@@ -130,3 +132,4 @@ cublasStatus_t cublasGaxpy(
        return cublasZaxpy(handle, n, alpha, x, incx, y, incy);
 }
 
+#endif  // PARAMENT_BLAS_H_

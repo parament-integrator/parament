@@ -12,6 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#ifndef PARAMENT_MATHHELPER_H_
+#define PARAMENT_MATHHELPER_H_
 
 #include <cublas_v2.h>
 
@@ -68,3 +70,6 @@ LIBSPEC double OneNorm_fp64(cuDoubleComplex* arr, unsigned int dim);
 #ifdef __cplusplus
 }
 #endif
+
+
+#endif  // PARAMENT_MATHHELPER_H_

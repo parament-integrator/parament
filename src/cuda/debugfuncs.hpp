@@ -12,7 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-
+#ifndef DIAGONAL_ADD_H_
+#define DIAGONAL_ADD_H_
 
 #include <cublas_v2.h>
 #include <stdlib.h>
@@ -22,4 +23,4 @@ limitations under the License.
 void readback(cuComplex *test, int dim);
 void readback(cuDoubleComplex *test, int dim);
 
-
+#endif  // DIAGONAL_ADD_H_

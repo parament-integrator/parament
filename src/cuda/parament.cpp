@@ -46,7 +46,7 @@ limitations under the License.
 
 
 /*
- * Create Parment context and prepare GPU
+ * Create Parament context and prepare GPU
  */
 template<typename complex_t>
 Parament_ErrorCode Parament_create(Parament_Context<complex_t> **handle_p) {
@@ -128,7 +128,7 @@ error_cleanup1:
 }
 
 /*
- * Frees a previously allocated hamiltionian. No-op if no hamiltonian has been allocated.
+ * Frees a previously allocated hamiltonian. No-op if no hamiltonian has been allocated.
  */
 template<typename complex_t>
 static void freeHamiltonian(Parament_Context<complex_t> *handle) {
@@ -154,28 +154,28 @@ static void freeHamiltonian(Parament_Context<complex_t> *handle) {
 template<typename complex_t>
 static void freeWorkingMemory(Parament_Context<complex_t> *handle) {
     if (handle->curr_max_pts != 0) {
-    cudaError_t error;
-    PARAMENT_DEBUG("Freeing handle->c0: 0x%p", handle->c0);
-    error = cudaFree(handle->c0);
-    assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->c1: 0x%p", handle->c1);
-    error = cudaFree(handle->c1);
-    assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->X: 0x%p", handle->X);
-    error = cudaFree(handle->X);
-    assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->D0: 0x%p", handle->D0);
-    error = cudaFree(handle->D0);
-    assert(error == cudaSuccess);
-    PARAMENT_DEBUG("Freeing handle->D1: 0x%p", handle->D1);
-    error = cudaFree(handle->D1);
-    assert(error == cudaSuccess);
-    handle->c0 = NULL;
-    handle->c1 = NULL;
-    handle->X = NULL;
-    handle->D0 = NULL;
-    handle->D1 = NULL;
-    handle->curr_max_pts = 0;
+        cudaError_t error;
+        PARAMENT_DEBUG("Freeing handle->c0: 0x%p", handle->c0);
+        error = cudaFree(handle->c0);
+        assert(error == cudaSuccess);
+        PARAMENT_DEBUG("Freeing handle->c1: 0x%p", handle->c1);
+        error = cudaFree(handle->c1);
+        assert(error == cudaSuccess);
+        PARAMENT_DEBUG("Freeing handle->X: 0x%p", handle->X);
+        error = cudaFree(handle->X);
+        assert(error == cudaSuccess);
+        PARAMENT_DEBUG("Freeing handle->D0: 0x%p", handle->D0);
+        error = cudaFree(handle->D0);
+        assert(error == cudaSuccess);
+        PARAMENT_DEBUG("Freeing handle->D1: 0x%p", handle->D1);
+        error = cudaFree(handle->D1);
+        assert(error == cudaSuccess);
+        handle->c0 = NULL;
+        handle->c1 = NULL;
+        handle->X = NULL;
+        handle->D0 = NULL;
+        handle->D1 = NULL;
+        handle->curr_max_pts = 0;
     }
 }
 
@@ -237,7 +237,6 @@ Parament_ErrorCode Parament_setHamiltonian(
     if (use_magnus) {
         // amps*(amps-1)/2 pairwise commutators + amps commutators with H0 + amps "real control Hamiltonians"
         H1memory = dim * dim * sizeof(complex_t) * ( 2*amps + (amps*(amps-1))/2 );
-
     }
     else
     {
@@ -255,7 +254,6 @@ Parament_ErrorCode Parament_setHamiltonian(
         goto error_cleanup;
     }
 
-    
 
     // Transfer to GPU
     cudaError_t error;
@@ -295,9 +293,6 @@ Parament_ErrorCode Parament_setHamiltonian(
         complex_t *currentCommAddr;
 
         for (int i = 0;i<amps;++i){
-
-           
-            
             currentH1Addr   = handle->H1 + i*dim*dim;
             currentCommAddr = handle->H1 + (i+amps)*dim*dim;
 
@@ -335,7 +330,6 @@ Parament_ErrorCode Parament_setHamiltonian(
                 currentCommAddr = handle->H1 + (2*amps+(i-1)+j)*dim*dim;
 
 
-
                 if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
@@ -360,7 +354,6 @@ Parament_ErrorCode Parament_setHamiltonian(
                     goto error_cleanup;
                 };
                 }
-                
             }
         }
     }
@@ -537,7 +530,7 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
     }
 
     if (handle->enable_magnus == true){
-        control_magnus(handle->c1,handle->c2,amps,pts,dt, handle->numSMs);
+        control_magnus(handle->c1, handle->c2, amps,pts,dt, handle->numSMs);
         expansion_array = handle->c2;
         expansion_amps = 2*amps+((amps-1)*amps)/2;
         expansion_pts = (pts-1)/2;
@@ -719,7 +712,7 @@ int Parament_selectIterationCycles_fp32(double H_norm, double dt) {
 }
 
 /*
- * Look-up for norm threasholds for FP64
+ * Look-up for norm thresholds for FP64
  */
 int Parament_selectIterationCycles_fp64(double H_norm, double dt) {
     PARAMENT_DEBUG("HNORM*DT = %f\n", H_norm*dt );
@@ -756,7 +749,7 @@ Parament_ErrorCode Parament_setIterationCyclesManually(Parament_Context<complex_
 }
 
 /*
- * Enable dynmic Checbychev cycle selection
+ * Enable dynamic Chebychev cycle selection
  */
 template<typename complex_t>
 Parament_ErrorCode Parament_automaticIterationCycles(Parament_Context<complex_t> *handle) {
