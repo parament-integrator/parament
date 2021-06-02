@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Deploy to Kaggle
-        uses: joelhanson/kaggle-kernel-actions
+        uses: Joel-hanson/kaggle-kernel-actions@V1
         with:
           kaggle_username: ${{ secrets.KAGGLE_USERNAME }}
           kaggle_key: ${{ secrets.KAGGLE_KEY }}
