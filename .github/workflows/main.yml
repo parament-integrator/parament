@@ -23,15 +23,9 @@ jobs:
         with:
           kaggle_username: ${{ secrets.KAGGLE_USERNAME }}
           kaggle_key: ${{ secrets.KAGGLE_KEY }}
-          kaggle_make_new_kernel: true
+          kaggle_metadata_path: kernel-metadata.json
           kernel_id: polwelter/parament-testsuite-foobar
-          code_file_path: Parament_colab_test.ipynb
-          kernel_title: Parament test suite
-          language: python
-          kernel_type: notebook
-          is_private: true
-          enable_gpu: true
-          enable_internet: true
+          kaggle_make_new_kernel: true
           collect_output: true
       - name: Download outputs
         uses: actions/upload-artifact@v1
