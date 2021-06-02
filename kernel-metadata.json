@@ -1,6 +1,6 @@
 {
   "id": "polwelter/parament-testsuite-foobar",
-  "title": "Parament test suite",
+  "title": "parament-testsuite-foobar",
   "code_file": "Parament_colab_test.ipynb",
   "language": "python",
   "kernel_type": "notebook",
