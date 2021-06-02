@@ -2,7 +2,7 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -13,57 +13,28 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  test:
+    name: Run pyparament test suite
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: Jimver/cuda-toolkit@v0.2.1
-        id: cuda-toolkit
-        with:
-          cuda: '11.2.2'
-      
-      - run: |
-          echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"
-          echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-          nvcc -V
-      
-      # Check-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      - name: Build parament
-        run: . ./tools/build.sh
-        
-      - name: Setup Python
-        uses: actions/setup-python@v2.2.2
+      - name: Deploy to Kaggle
+        uses: joelhanson/kaggle-kernel-actions
         with:
-          python-version: 3.9
-        
-      - name: Build pyparament
-        run: |
-          python -m venv parament_py
-          . ./parament_py/bin/activate
-          pip install -r ./src/python/requirements.txt
-          cd src
-          python setup.py bdist_wheel
-          python setup.py sdist
-          deactivate
-
-      # Upload the artifacts
-      - uses: actions/upload-artifact@v2
+          kaggle_username: ${{ secrets.KAGGLE_USERNAME }}
+          kaggle_key: ${{ secrets.KAGGLE_KEY }}
+          kaggle_make_new_kernel: true
+          kernel_id: polwelter/parament-testsuite-foobar
+          code_file_path: Parament_colab_test.ipynb
+          kernel_title: Parament test suite
+          language: python
+          kernel_type: notebook
+          is_private: true
+          enable_gpu: true
+          enable_internet: true
+          collect_output: true
+      - name: Download outputs
+        uses: actions/upload-artifact@v1
         with:
-          name: linux-lib
-          path: |
-            build/parament.bin
-            build/libparament.so
-      - uses: actions/upload-artifact@v2
-        with:
-          name: linux-python
-          path: |
-            src/dist/*.whl
-            src/dist/parament-*.tar.gz
-
-
-          
+          name: outputs
+          path: outputs/outputs.zip
