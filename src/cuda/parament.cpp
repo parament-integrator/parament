@@ -305,7 +305,7 @@ Parament_ErrorCode Parament_setHamiltonian(
             if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
-            &handle->one,
+            &handle->mone,
             handle->H0, dim,
             currentH1Addr, dim,
             &handle->zero,
@@ -317,7 +317,7 @@ Parament_ErrorCode Parament_setHamiltonian(
             if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
             CUBLAS_OP_N, CUBLAS_OP_N,
             dim, dim, dim,
-            &handle->mone,
+            &handle->one,
             currentH1Addr, dim,
             handle->H0, dim,
             &handle->one,
@@ -339,7 +339,7 @@ Parament_ErrorCode Parament_setHamiltonian(
                 if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
-                &handle->one,
+                &handle->mone,
                 currentH2Addr, dim,
                 currentH1Addr, dim,
                 &handle->zero,
@@ -351,7 +351,7 @@ Parament_ErrorCode Parament_setHamiltonian(
                 if (CUBLAS_STATUS_SUCCESS != cublasGgemm(handle->cublasHandle,
                 CUBLAS_OP_N, CUBLAS_OP_N,
                 dim, dim, dim,
-                &handle->mone,
+                &handle->one,
                 currentH1Addr, dim,
                 currentH2Addr, dim,
                 &handle->one,
@@ -394,7 +394,7 @@ static Parament_ErrorCode equipropComputeCoefficients(Parament_Context<complex_t
             return PARAMENT_STATUS_SELECT_SMALLER_DT;
         }
 
-        handle->MMAX = MMAX_selected;
+        handle->MMAX = MMAX_selected+2;
     }
     PARAMENT_DEBUG("\nMMAX is %d\n",handle->MMAX);
 
@@ -547,7 +547,9 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
     //readback(expansion_array,expansion_amps*expansion_pts);
     //readback(handle->H0,dim*dim);
     //readback(handle->H1,dim*dim*expansion_amps);
-
+    PARAMENT_DEBUG("%d expansion points", expansion_pts);
+    PARAMENT_DEBUG("%d expansion amplitudes", expansion_amps);
+    
 
     error = cublasGgemm(handle->cublasHandle,
         CUBLAS_OP_N, CUBLAS_OP_T,
@@ -560,6 +562,9 @@ static Parament_ErrorCode equipropExpand(Parament_Context<complex_t> *handle, un
     if (error != CUBLAS_STATUS_SUCCESS) {
         return PARAMENT_STATUS_CUBLAS_FAILED;
     }  
+
+    //PARAMENT_DEBUG("Here are the Hamiltonians prior to exponentiation");
+    //readback(handle->X,dim*dim*expansion_pts);
 
     return PARAMENT_STATUS_SUCCESS;
 }
@@ -575,6 +580,9 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
     complex_t *const D0 = handle->D0;
     complex_t *const D1 = handle->D1;
     complex_t *const X = handle->X;
+
+    //PARAMENT_DEBUG("Here are the Hamiltonians prior to exponentiation X");
+    //readback(handle->X,dim*dim*pts);
 
     cublasStatus_t error;
 
@@ -645,8 +653,8 @@ static Parament_ErrorCode equipropPropagate(Parament_Context<complex_t> *handle,
            ptr_accumulate = &handle->mone;
        }
     }
-    //readback(D1,dim*dim*pts);
     // D1 contains now the matrix exponentials
+    //readback(D1,dim*dim*pts);
     return PARAMENT_STATUS_SUCCESS;
 }
 
@@ -659,9 +667,17 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
     const unsigned int dim = handle->dim;
     complex_t *const D1 = handle->D1;
 
+    //PARAMENT_DEBUG("These are the matrix exponenitals prior to reduction");
     //readback(D1,dim*dim*pts);
 
     cublasStatus_t error;
+
+    complex_t *read = handle->D1;
+    complex_t *write = handle->D0;
+    complex_t *temp = handle->D0;
+
+    cublasOperation_t op = CUBLAS_OP_N;
+    
 
     int remain_pts = pts;
     int pad = 0;
@@ -670,13 +686,13 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
         remain_pts = remain_pts/2;
 
         error = cublasGgemmStridedBatched(handle->cublasHandle,
-            CUBLAS_OP_N, CUBLAS_OP_N,
+            op, op,
             dim, dim, dim,
             &handle->one,
-            D1          , dim, dim*dim*2,
-            D1 + dim*dim, dim, dim*dim*2,
+            read          , dim, dim*dim*2,
+            read + dim*dim, dim, dim*dim*2,
             &handle->zero,
-            D1, dim, dim*dim,
+            write, dim, dim*dim,
             remain_pts
         );
         if (error != CUBLAS_STATUS_SUCCESS)
@@ -686,14 +702,25 @@ static Parament_ErrorCode equipropReduce(Parament_Context<complex_t> *handle, un
             // One left over, need to copy to Array
             error = cublasGcopy(handle->cublasHandle,
                 dim*dim,
-                D1 + dim*dim*(remain_pts*2), 1,
-                D1 + dim*dim*(remain_pts), 1
+                read + dim*dim*(remain_pts*2), 1,
+                write + dim*dim*(remain_pts), 1
             );
             if (error != CUBLAS_STATUS_SUCCESS)
                 return PARAMENT_STATUS_CUBLAS_FAILED;
             remain_pts += 1;
         }
+        temp = read;
+        read = write;
+        write = temp;
+
+        op = CUBLAS_OP_N;
+        
+        PARAMENT_DEBUG("Array inbetween reduction operation");
+        //readback(read,dim*dim*pts);
+
     }
+    handle->D1 = read;
+    handle->D0 = write;
     return PARAMENT_STATUS_SUCCESS;
 }
 
@@ -794,6 +821,19 @@ Parament_ErrorCode Parament_equiprop(Parament_Context<complex_t> *handle, comple
     handle->lastError = equipropExpand(handle, pts, amps, dt);
     if (PARAMENT_STATUS_SUCCESS != handle->lastError) {
         return handle->lastError;
+    }
+
+    if ((handle->quadrature_mode == PARAMENT_QUADRATURE_MIDPOINT) && (handle->enable_magnus == false)){
+        pts = pts-1;
+    }
+
+    if ((handle->quadrature_mode == PARAMENT_QUADRATURE_SIMPSON) && (handle->enable_magnus == false)){
+        pts = (pts-1)/2;
+    }
+
+    if (handle->enable_magnus == true){
+        pts = (pts-1)/2;
+        
     }
 
     handle->lastError = equipropPropagate(handle, dt, pts);

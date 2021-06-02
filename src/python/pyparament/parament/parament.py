@@ -162,23 +162,25 @@ class Parament:
         amps = np.shape(H1)
         if len(amps) > 2:
             amps = amps[0]
-            H1 = np.swapaxes(H1, 0, 2)
+            #H1 = np.swapaxes(H1, 0, 2)
         else:
             amps = 1
+        #H1 = np.swapaxes(H1, 0, 1)
         self.dim = dim
         self.amps = amps
+        # Set Hamiltonians in C order such that we do not need to flip the coefficient arrays to get the correct time ordering
         if self._use_doubles:
             self._check_error(self._lib.Parament_setHamiltonian_fp64(
                 self._handle,
-                np.complex128(np.asfortranarray(H0)),
-                np.complex128(np.asfortranarray(H1)),
+                np.complex128(np.ravel(H0,order='C')),
+                np.complex128(np.ravel(H1,order='C')),
                 dim, amps, use_magnus, mode_sel
             ))
         else:
             self._check_error(self._lib.Parament_setHamiltonian(
                 self._handle,
-                np.complex64(np.asfortranarray(H0)),
-                np.complex64(np.asfortranarray(H1)),
+                np.complex64(np.ravel(H0,order='C')),
+                np.complex64(np.ravel(H1,order='C')),
                 dim, amps, use_magnus, mode_sel
             ))
         logger.debug("Python setHamiltonian completed")
@@ -218,12 +220,12 @@ class Parament:
         logger.debug("EQUIPROP PYTHON CALLED")
         pts = np.shape(carr[0])[0]
         if self._use_doubles:
-            output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
+            output = np.zeros(self.dim**2, dtype=np.complex128, order='C')
             carr = np.complex128(carr)
             self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr,order='C'), np.double(dt),
                                                                np.uint(pts), np.uint(self.amps), output))
         else:
-            output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
+            output = np.zeros(self.dim**2, dtype=np.complex64, order='C')
             carr = np.complex64(carr)
             self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr,order='C'), np.double(dt),
                                                           np.uint(pts), np.uint(self.amps), output))
