@@ -1,0 +1,13 @@
+{
+  "id": "polwelter/parament-testsuite-foobar",
+  "title": "Parament test suite",
+  "code_file": "Parament_colab_test.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}
