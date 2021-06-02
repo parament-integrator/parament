@@ -19,7 +19,7 @@ limitations under the License.
 void printcomplex(cuComplex* data, int len) {
     int j = 0;
     for (j = 0; j < len; j++) {
-        printf("(%5.3f,%5.3fi) ", data[j].x, data[j].y);
+        printf("(%5.10f,%5.10fi) ", data[j].x, data[j].y);
     }
     printf("\n");
 }
@@ -28,7 +28,7 @@ void printcomplex(cuComplex* data, int len) {
 void printcomplex(cuDoubleComplex* data, int len) {
     int j = 0;
     for (j = 0; j < len; j++) {
-        printf("(%5.3f,%5.3fi) ", data[j].x, data[j].y);
+        printf("(%5.10f,%5.10fi) ", data[j].x, data[j].y);
     }
     printf("\n");
 }

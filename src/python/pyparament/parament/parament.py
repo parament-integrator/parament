@@ -190,23 +190,24 @@ class Parament:
         amps = np.shape(H1)
         if len(amps) > 2:
             amps = amps[0]
-            H1 = np.swapaxes(H1, 0, 2)
         else:
             amps = 1
         self.dim = dim
         self.amps = amps
+        # Set Hamiltonians in C order such that we do not need to flip the coefficient arrays to get the correct time
+        # ordering.
         if self._use_doubles:
             self._check_error(self._lib.Parament_setHamiltonian_fp64(
                 self._handle,
-                np.complex128(np.ravel(H0, 'F')),
-                np.complex128(np.ravel(H1, 'F')),
+                np.complex128(np.ravel(H0, order='C')),
+                np.complex128(np.ravel(H1, order='C')),
                 dim, amps, use_magnus, mode_sel
             ))
         else:
             self._check_error(self._lib.Parament_setHamiltonian(
                 self._handle,
-                np.complex64(np.ravel(H0, 'F')),
-                np.complex64(np.ravel(H1, 'F')),
+                np.complex64(np.ravel(H0, order='C')),
+                np.complex64(np.ravel(H1, order='C')),
                 dim, amps, use_magnus, mode_sel
             ))
         logger.debug("Python setHamiltonian completed")
@@ -260,17 +261,17 @@ class Parament:
             raise ValueError("All amplitude arrays must have the same length.")
 
         if self._use_doubles:
-            output = np.zeros(self.dim**2, dtype=np.complex128, order='F')
+            output = np.zeros(self.dim**2, dtype=np.complex128, order='C')
             carr = np.complex128(carr)
             self._check_error(self._lib.Parament_equiprop_fp64(self._handle, np.ravel(carr, order='C'), np.double(dt),
                                                                np.uint(pts), np.uint(amps), output))
         else:
-            output = np.zeros(self.dim**2, dtype=np.complex64, order='F')
+            output = np.zeros(self.dim**2, dtype=np.complex64, order='C')
             carr = np.complex64(carr)
             print(np.float(dt))
             self._check_error(self._lib.Parament_equiprop(self._handle, np.ravel(carr, order='C'), np.float(dt),
                                                           np.uint(pts), np.uint(amps), output))
-        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim))).T
+        output_data = np.ascontiguousarray(np.reshape(output, (self.dim, self.dim)))
         if self._use_qutip:
             output_data = qutip.Qobj(output_data, dims=self._qutip_H0.dims)
         return output_data

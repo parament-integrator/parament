@@ -100,19 +100,16 @@ def test_fp64_expm_scipy_random(dim):
 @pytest.mark.parametrize("dim", [2, 16])
 def test_fp32_multi_fields(dim):
     H0, H1 = random_hamiltonians(dim)
-    dt = 0.01
     H2 = H0[:, :]
+    dt = 0.01
 
-    carr1 = np.array([0.1, 0.2])
-    carr2 = np.array([0.3, 0.4])
-    dt = 0.1
+    carr1 = np.random.rand(10)
+    carr2 = np.random.rand(10)
     with parament.Parament(precision='fp32') as context:
         context.set_hamiltonian(H0, H1, H2, use_magnus=False, quadrature_mode='none')
         propagator = context.equiprop(dt, carr1, carr2)
 
-    reference = scipy.linalg.expm(-1j*dt*(H0 + carr1*H1 + carr2*H2))
-
-    reference = np.eye(2, dtype=np.complex128)
+    reference = np.eye(dim, dtype=np.complex128)
     for i in range(len(carr1)):
         X = H0 + carr1[i] * H1 + carr2[i] * H2
         G = -1j * X * dt

@@ -109,8 +109,8 @@ __global__ void generate_midpoint(cuComplex *coeffs_in, cuComplex *coeffs_out, i
     cuComplex half = make_cuComplex(0.5,0);
 
     if (i < n - 1 && j < amps){
-        coeffs_out[i+j*n] = cuCaddf(coeffs_in[i+j*n],coeffs_in[i+j*n+1]);
-        coeffs_out[i+j*n] = cuCmulf(half,coeffs_out[i+j*n]);
+        coeffs_out[i+j*(n-1)] = cuCaddf(coeffs_in[i+j*n],coeffs_in[i+j*n+1]);
+        coeffs_out[i+j*(n-1)] = cuCmulf(half,coeffs_out[i+j*(n-1)]);
     }
 }
 
@@ -125,8 +125,8 @@ __global__ void generate_midpoint_fp64(cuDoubleComplex *coeffs_in, cuDoubleCompl
     cuDoubleComplex half = make_cuDoubleComplex(0.5,0);
 
     if (i < n - 1 && j < amps){
-        coeffs_out[i+j*n] = cuCadd(coeffs_in[i+j*n],coeffs_in[i+j*n+1]);
-        coeffs_out[i+j*n] = cuCmul(half,coeffs_out[i+j*n]);
+        coeffs_out[i+j*(n-1)] = cuCadd(coeffs_in[i+j*n],coeffs_in[i+j*n+1]);
+        coeffs_out[i+j*(n-1)] = cuCmul(half,coeffs_out[i+j*(n-1)]);
     }
 }
 
