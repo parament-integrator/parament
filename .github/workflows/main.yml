@@ -41,4 +41,5 @@ jobs:
           echo "Retrieving output..."
           kaggle kernels output polwelter/run-parament-testsuite -p test/output
           tree test
+          cat test/output/run-parament-testsuite.log
 
