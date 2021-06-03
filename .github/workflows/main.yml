@@ -28,10 +28,13 @@ jobs:
           kaggle_make_new_kernel: true
           collect_output: true
           
-      - name: Decompress output archive
+      - name: Show Tree
         run: |
-          unzip outputs/outputs.zip -d .
           tree
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: outputs/report_test.xml
       - name: Download outputs
         uses: actions/upload-artifact@v1
         with:
