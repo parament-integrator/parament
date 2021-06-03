@@ -39,7 +39,7 @@ jobs:
           echo "Waiting for run to complete (1 minute)..."
           sleep 1m
           echo "Retrieving output..."
-          kaggle kernels output -p test/output
+          kaggle kernels output polwelter/run-parament-testsuite -p test/output
           tree test/output
           kaggle kernels status polwelter/run-parament-testsuite | grep -q "complete" || echo "error"
       - uses: actions/upload-artifact@v2
