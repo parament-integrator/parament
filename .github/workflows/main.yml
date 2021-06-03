@@ -18,25 +18,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Deploy to Kaggle
-        uses: Joel-hanson/kaggle-kernel-actions@V1
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
         with:
+          python-version: 3.9
+      - name: Install Kaggle API
+        run: pip install kaggle
+      - name: Synthesize note book
+        run: |
+          sed -i -e 's/{{ GITHUB_SHA }}/$GITHUB_SHA/g' test/run_parament_testsuite.py
+          sed -i -e 's/{{ GITHUB_REPOSITORY }}/$GITHUB_REPOSITORY/g' test/run_parament_testsuite.py
+          cat test/run_parament_testsuite.py
+      - name: Deploy to Kaggle
+        env:
           kaggle_username: ${{ secrets.KAGGLE_USERNAME }}
           kaggle_key: ${{ secrets.KAGGLE_KEY }}
-          kaggle_metadata_path: kernel-metadata.json
-          kernel_id: polwelter/parament-testsuite-foobar
-          kaggle_make_new_kernel: true
-          collect_output: true
-          
-      - name: Show Tree
         run: |
-          tree
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: outputs/report_test.xml
-      - name: Download outputs
-        uses: actions/upload-artifact@v1
-        with:
-          name: outputs
-          path: outputs/outputs.zip
+          echo "Pushing script to Kaggle..."
+          kaggle kernels push -p /test
+          echo "Waiting for run to complete (1 minute)..."
+          sleep 1m
+          echo "Retrieving output..."
+          kaggle kernels output polwelter/run-parament-testsuite -p /test/output
+          tree /test
+
