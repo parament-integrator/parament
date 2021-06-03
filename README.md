@@ -2,6 +2,7 @@
 [![Documentation Status](https://readthedocs.org/projects/parament/badge/?version=latest)](https://parament.readthedocs.io/en/latest/?badge=latest)
 [![CI](https://github.com/parament-integrator/parament/actions/workflows/main.yml/badge.svg)](https://github.com/parament-integrator/parament/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/parament-integrator/parament/branch/master/graph/badge.svg?token=UUV3ATJFGZ)](https://codecov.io/gh/parament-integrator/parament)
+[![Maintainability](https://api.codeclimate.com/v1/badges/60aab4a0d76def9c986e/maintainability)](https://codeclimate.com/github/parament-integrator/parament/maintainability)
 
 # Parament
 **Para**llelized **M**atrix **E**xponentiation for **N**umerical **T**ime evolution
