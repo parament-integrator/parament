@@ -5,11 +5,10 @@ GITHUB_SHA = "{{ GITHUB_SHA }}"
 GITHUB_REPOSITORY = "{{ GITHUB_REPOSITORY }}"
 
 print('=== Installing parament...')
-print('>', cmd)
-
 my_env = os.environ.copy()
 my_env["NVCC_ARGS"] = "-arch=compute_37"
 cmd = f'pip install pytest-cov git+https://github.com/{GITHUB_REPOSITORY}@{commit_sha}#subdirectory=src'
+print('>', cmd)
 args = shlex.split(cmd)
 process = subprocess.run(args,
                          stdout=subprocess.PIPE,
