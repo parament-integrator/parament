@@ -76,12 +76,13 @@ pytest --pyargs parament
 ## Source tree structure
 
 This is a rough overview of the most important files and folders in this repository.
-```bash
+```
 ├── _docs                       The source code for the documentation.
 ├── _src                        The root of the parament source.
 │   ├── _cuda                   CPP source code.
 │   └── _python                 Source code of Python wrapper.
 │       └── _test               Built-in test-suite. See above.
+├── _tests                      Runner script to execute test suite on Kaggle.     
 └── _tools                      Various scripts, mainly related to building.
     └── build.bat               Build script for Windows. See above.
     └── build.sh                Build script for Linux. See above.

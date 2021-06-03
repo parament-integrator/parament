@@ -1,9 +1,9 @@
 {
-  "id": "polwelter/parament-testsuite-foobar",
-  "title": "parament-testsuite-foobar",
-  "code_file": "Parament_colab_test.ipynb",
+  "id": "polwelter/run-parament-testsuite",
+  "title": "run-parament-testsuite",
+  "code_file": "run_parament_testsuite.py",
   "language": "python",
-  "kernel_type": "notebook",
+  "kernel_type": "script",
   "is_private": "true",
   "enable_gpu": "true",
   "enable_internet": "true",
