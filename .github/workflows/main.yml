@@ -40,6 +40,13 @@ jobs:
           sleep 1m
           echo "Retrieving output..."
           kaggle kernels status polwelter/run-parament-testsuite | grep -q "complete" || exit 1
-          tree test
-          cat test/output/run-parament-testsuite.log
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Test results
+          path: test/output/*
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test/output/report_test.xml
 
