@@ -27,6 +27,11 @@ jobs:
           kernel_id: polwelter/parament-testsuite-foobar
           kaggle_make_new_kernel: true
           collect_output: true
+          
+      - name: Decompress output archive
+        run: |
+          unzip outputs/outputs.zip -d .
+          tree
       - name: Download outputs
         uses: actions/upload-artifact@v1
         with:
