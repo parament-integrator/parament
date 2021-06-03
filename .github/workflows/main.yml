@@ -41,8 +41,9 @@ jobs:
           echo "Retrieving output..."
           kaggle kernels output polwelter/run-parament-testsuite -p test/output
           tree test/output
-          kaggle kernels status polwelter/run-parament-testsuite | grep -q "complete" || echo "error"
+          kaggle kernels status polwelter/run-parament-testsuite | grep -q "complete" || exit 1
       - uses: actions/upload-artifact@v2
+        if: always()
         with:
           name: Test results
           path: test/output/*
