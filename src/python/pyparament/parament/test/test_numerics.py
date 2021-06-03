@@ -22,6 +22,7 @@ NUMERICS_LOGFILE = 'numerics.log'
 
 
 def random_hamiltonians(dim):
+    assert False
     np.random.seed(27)
     H0 = np.random.uniform(-1, 1, (dim, dim)) / dim + 1j * np.random.uniform(-1, 1, (dim, dim)) / 2
     H0 = H0 + H0.conj().T
