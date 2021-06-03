@@ -26,13 +26,14 @@ jobs:
         run: pip install kaggle
       - name: Synthesize note book
         run: |
-          sed -i -e 's/{{ GITHUB_SHA }}/$GITHUB_SHA/g' test/run_parament_testsuite.py
+          echo "$GITHUB_SHA"
+          sed -i -e "s/{{ GITHUB_SHA }}/$GITHUB_SHA/g" test/run_parament_testsuite.py
           sed -i -e 's/{{ GITHUB_REPOSITORY }}/$GITHUB_REPOSITORY/g' test/run_parament_testsuite.py
           cat test/run_parament_testsuite.py
       - name: Deploy to Kaggle
         env:
-          kaggle_username: ${{ secrets.KAGGLE_USERNAME }}
-          kaggle_key: ${{ secrets.KAGGLE_KEY }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
         run: |
           echo "Pushing script to Kaggle..."
           kaggle kernels push -p /test
