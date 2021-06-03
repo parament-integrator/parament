@@ -1,0 +1,13 @@
+{
+  "id": "polwelter/run-parament-testsuite",
+  "title": "run-parament-testsuite",
+  "code_file": "run_parament_testsuite.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}

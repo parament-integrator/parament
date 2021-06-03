@@ -1,6 +1,8 @@
 
 [![Documentation Status](https://readthedocs.org/projects/parament/badge/?version=latest)](https://parament.readthedocs.io/en/latest/?badge=latest)
 [![CI](https://github.com/parament-integrator/parament/actions/workflows/main.yml/badge.svg)](https://github.com/parament-integrator/parament/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/parament-integrator/parament/branch/master/graph/badge.svg?token=UUV3ATJFGZ)](https://codecov.io/gh/parament-integrator/parament)
+[![Maintainability](https://api.codeclimate.com/v1/badges/60aab4a0d76def9c986e/maintainability)](https://codeclimate.com/github/parament-integrator/parament/maintainability)
 
 # Parament
 **Para**llelized **M**atrix **E**xponentiation for **N**umerical **T**ime evolution
@@ -76,12 +78,13 @@ pytest --pyargs parament
 ## Source tree structure
 
 This is a rough overview of the most important files and folders in this repository.
-```bash
+```
 ├── _docs                       The source code for the documentation.
 ├── _src                        The root of the parament source.
 │   ├── _cuda                   CPP source code.
 │   └── _python                 Source code of Python wrapper.
 │       └── _test               Built-in test-suite. See above.
+├── _tests                      Runner script to execute test suite on Kaggle.     
 └── _tools                      Various scripts, mainly related to building.
     └── build.bat               Build script for Windows. See above.
     └── build.sh                Build script for Linux. See above.
