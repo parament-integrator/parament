@@ -35,7 +35,7 @@ jobs:
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
         run: |
           echo "Pushing script to Kaggle..."
-          tree /test
+          tree
           kaggle kernels push -p /test/
           echo "Waiting for run to complete (1 minute)..."
           sleep 1m
