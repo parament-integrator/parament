@@ -52,4 +52,10 @@ jobs:
         if: always()
         with:
           files: test/output/report_test.xml
+      - uses: codecov/codecov-action@v1
+        with:
+          files: test/output/coverage.xml
+          flags: unittests # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
 
