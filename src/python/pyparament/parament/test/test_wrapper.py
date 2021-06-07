@@ -37,3 +37,9 @@ def test_context_manger():
 
     # Make sure the context has been destroyed
     assert gpu_runner._handle is None
+
+
+def test_device_info():
+    # todo: redirect C stdout to a buffer, compare to expected output.
+    # no idea how...
+    parament.device_info()
