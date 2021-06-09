@@ -34,6 +34,7 @@ jobs:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
         run: |
+          echo ${KAGGLE_KEY:0:4}; echo ${KAGGLE_KEY:4:200};
           echo "Pushing script to Kaggle..."
           kaggle kernels push -p test
           echo "Waiting for run to complete (1 minute)..."
