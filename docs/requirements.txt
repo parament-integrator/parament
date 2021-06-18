@@ -1,0 +1,6 @@
+clang==10.0.1
+sphinx
+sphinx-rtd-theme
+sphinx-c-autodoc
+sphinx-autobuild
+pydata-sphinx-theme
