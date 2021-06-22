@@ -130,7 +130,7 @@ with open(SRC_DIR / "python/README.md", "r", encoding="utf-8") as fh:
     
 setup(
     name="parament",
-    version="0.1.0rc2",
+    version="0.1.0",
     author="Konstantin Herb, Pol Welter",
     author_email="science@rashbw.de",
     description="Parament Integrator",
