@@ -124,16 +124,18 @@ class bdist_wheel(_bdist_wheel):
         return python, abi, plat
 
     
-with open("python/README.md", "r", encoding="utf-8") as fh:
+with open(SRC_DIR / "python/README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
     
 setup(
     name="parament",
-    version="0.1",
-    author="Konstantin Herb, Pol Welter,
-    author_email="Konstantin Herb <kh@rashbw.de>, Pol Welter <polwelter@gmail.com>",
+    version="0.1.0rc1",
+    author="Konstantin Herb, Pol Welter",
+    author_email="science@rashbw.de",
     description="Parament Integrator",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     package_dir={'': 'python/pyparament'},
     packages=find_packages(where='python/pyparament'),
     url="https://github.com/parament-integrator/parament",
