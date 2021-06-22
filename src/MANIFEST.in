@@ -1,1 +1,2 @@
-recursive-include cuda *.c *.h *.cu
+include python/README.md python/LICENSE.txt
+recursive-include cuda *.c *.h *.cu *.hpp *.cpp

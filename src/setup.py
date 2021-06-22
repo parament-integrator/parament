@@ -123,12 +123,33 @@ class bdist_wheel(_bdist_wheel):
         python, abi = 'py3', 'none'
         return python, abi, plat
 
+    
+with open(SRC_DIR / "python/README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
+    
 setup(
     name="parament",
-    version="0.1",
+    version="0.1.0rc2",
+    author="Konstantin Herb, Pol Welter",
+    author_email="science@rashbw.de",
+    description="Parament Integrator",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     package_dir={'': 'python/pyparament'},
     packages=find_packages(where='python/pyparament'),
+    url="https://github.com/parament-integrator/parament",
+    project_urls={
+        "Documentation": "https://parament.readthedocs.io/en/latest/",
+        "Bug Tracker": "https://github.com/parament-integrator/parament/issues",
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Environment :: GPU :: NVIDIA CUDA",
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
     cmdclass={
         "build": BuildCommand,
         "bdist_wheel": bdist_wheel,
@@ -140,6 +161,8 @@ setup(
         'test': [
             'pytest',
             'pytest-cov',
+            'scipy',
         ]
-    }
+    },
+    python_requires=">=3.6",
 )
