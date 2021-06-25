@@ -48,25 +48,27 @@ GPU architecture, that is not targeted by the default `nvcc` settings.
 ### Building & installing pyparament
 
 Pyparament is the official Python wrapper. It requires Python >=3.6.
-
-At this time, pyparament is not yet available via PyPI. You can still install
-the latest pyparament directly from Github by typing:
+You can get parament directly from PyPI.
+```
+pip install parament
+```
+Alternatively, you can also download the very latest version directly from Github.
 ```
 pip install git+https://github.com/parament-integrator/parament#subdirectory=src
 ```
-This will automatically compile the C library, and install it alongside the Python wrapper.
+Pip will automatically compile the C library, and install it alongside the Python wrapper.
 
 If you need to pass special arguments to the `nvcc` compiler, you can do so by setting a `NVCC_ARGS` environment variable.
 For instance, if you are targeting a Tesla K80 GPU (compute capability 3.7) from CUDA 11+, run (Windows and Linux, respectively):
 
 ```batch
 set NVCC_ARGS=-arch=compute_37
-pip install git+https://github.com/parament-integrator/parament#subdirectory=src
+pip install parament
 ```
 
 ```bash
 NVCC_ARGS="-arch=compute_37"
-pip install git+https://github.com/parament-integrator/parament#subdirectory=src
+pip install parament
 ```
 
 After you have installed pyparament, you can run the test suite (requires pytest to be installed).
