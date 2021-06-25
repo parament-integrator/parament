@@ -23,8 +23,8 @@ limitations under the License.
 
 using namespace std;
 
-#define TEST_DIM 2
-#define TEST_PTS 2
+#define TEST_DIM 12
+#define TEST_PTS 1000
 
 
 int main(int argc, const char* argv[]) {
