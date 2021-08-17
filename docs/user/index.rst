@@ -51,7 +51,7 @@ Research paper
 
 If you want to know the nitty-gritty details, have a look at the research paper.
 
-XXXXXX
+`arXiv:2108.07126 <https://arxiv.org/abs/2108.07126>`_
 
 
 Components
