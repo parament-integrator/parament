@@ -16,6 +16,14 @@ Parament is open-source and is released under the Apache Licence.
 
 The official documentation of Parament is [available on Read The Docs](https://parament.readthedocs.io/en/latest/).
 
+### Research paper
+If you want to know the nitty-gritty details, have a look at the research paper which got published in *Computer Physics Communications*:
+
+Konstantin Herb, Pol Welter:  
+*Parallel time integration using Batched BLAS (Basic Linear Algebra Subprograms) routines*  
+Computer Physics Communications **270**, 2022, 108181, ISSN 0010-4655  
+https://doi.org/10.1016/j.cpc.2021.108181
+
 ## Try it out
 
 You can [try Parament](https://github.com/parament-integrator/examples) for free, in the browser, via Google Colab (no local GPU required!).
