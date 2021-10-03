@@ -49,10 +49,12 @@ Computing the propagator for every time slice is embarrassingly parallel, so GPU
 Research paper
 --------------
 
-If you want to know the nitty-gritty details, have a look at the research paper.
+If you want to know the nitty-gritty details, have a look at the research paper which got published in *Computer Physics Communications*:
 
-`arXiv:2108.07126 <https://arxiv.org/abs/2108.07126>`_
-
+| Konstantin Herb, Pol Welter:
+| *Parallel time integration using Batched BLAS (Basic Linear Algebra Subprograms) routines*
+| Computer Physics Communications **270**, 2022, 108181, ISSN 0010-4655
+| https://doi.org/10.1016/j.cpc.2021.108181
 
 Components
 ==========
